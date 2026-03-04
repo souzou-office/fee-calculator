@@ -56,7 +56,8 @@ const COL_NAMES=["上限(万)","移転(設定有)","移転(設定無)","保存",
 
 const IX={MX:0,IS:1,IN:2,HZ:3,TS:4,TO:5,NS:6,NO:7};
 function lk(ft,m,c){if(m<=0)return 0;const r=ft.find(r=>m<=r[IX.MX]);return r?r[c]:ft[ft.length-1][c];}
-const LB={transfer:"所有権移転",preservation:"所有権保存",mortgage:"抵当権設定",rootMortgage:"根抵当権設定",deletion:"抹消",addressChange:"住所変更"};
+const LB={transfer:"所有権移転",preservation:"所有権保存",mortgage:"抵当権設定",rootMortgage:"根抵当権設定",deletion:"（根）抵当権抹消",addressChange:"所有権登記名義人住所変更"};
+function itemLabel(it){const b=LB[it.type]||it.type;if(it.type==="mortgage"){const m=Math.ceil((it.debtAmount||0)/10000);return m>0?`抵当権設定（債権額${fmtM(m)}）`:b;}if(it.type==="rootMortgage"){const m=Math.ceil((it.debtAmount||0)/10000);return m>0?`根抵当権設定（極度額${fmtM(m)}）`:b;}return b;}
 const f1=v=>Math.max(1000,Math.floor(v/1000)*1000);
 const f2=v=>v<=0?0:Math.max(1000,Math.floor(v/100)*100);
 
@@ -158,7 +159,7 @@ function genTSV(ci,items,rows,rate,g){
   {const b=ci.banks[0]||{};p("振込先①",b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");}
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
   const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
-  items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+scTotal:c.fee;p("作業項目",LB[it.type]||it.type,String(f),String(c.tax));});
+  items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+scTotal:c.fee;p("作業項目",itemLabel(it),String(f),String(c.tax));});
   rows.forEach(row=>{
     if(row.kind==="std"){const si=stdItems.find(s=>s.id===row.stdId);if(!si)return;const c=row.count||0;if(c>0){const fee=c*si.fee;const jippi=c*si.jippi;if(fee>0||jippi>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(fee),String(jippi));}}
     else if(row.kind==="postage"){const a=row.amount||0;if(a>0)p("作業項目","郵送費","0",String(a));}
@@ -447,7 +448,7 @@ function Card({item,index,onUpdate,onRemove,g,scTotal=0}){
     <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2"><div className="w-1.5 h-6 rounded-full" style={{background:cl[item.type]}} />
-          <span className="text-xs font-bold" style={{color:cl[item.type]}}>{LB[item.type]} #{index+1}</span></div>
+          <span className="text-xs font-bold" style={{color:cl[item.type]}}>{itemLabel(item)} #{index+1}</span></div>
         <button onClick={onRemove} className="text-xs px-2 py-1 rounded hover:bg-red-50" style={{color:"#e53e3e"}}>削除</button></div>
       <div className="grid grid-cols-2 gap-x-3">
         <Sel label="登記種別" value={item.type} onChange={v=>u({type:v})} options={[
