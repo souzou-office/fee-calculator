@@ -152,7 +152,8 @@ function getXFee(counts,stdItems,extras){
 
 function genTSV(ci,items,expList,extras,rate,g){
   const{unit,stdItems,counts}=g;const L=[];const p=(...v)=>L.push(v.join("\t"));
-  p("事務所",ci.office);p("請求日",ci.billingDate,"事件番号",ci.caseNumber);p("得意先",ci.client);
+  const bd=(ci.billingDate||"").replace(/-/g,"/").replace(/\/0/g,"/");
+  p("事務所",ci.office);p("請求日",bd,"事件番号",ci.caseNumber);p("得意先",ci.client);
   ["①","②","③"].forEach((s,i)=>{const c=ci.customers[i]||{};p(`顧客名${s}`,c.name||"",c.title||"");});
   ["①","②"].forEach((s,i)=>{const b=ci.banks[i]||{};p(`振込先${s}`,b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");});
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
@@ -565,6 +566,10 @@ function Export({ci,setCi,items,expList,extras,rate,g,onClose,saved,setSaved}){
   const u=p=>setCi({...ci,...p});const uc=(i,p)=>{const c=[...ci.customers];c[i]={...(c[i]||{}),...p};u({customers:c});};
   const ub=(i,p)=>{const b=[...ci.banks];b[i]={...(b[i]||{}),...p};u({banks:b});};
   const[showBM,setShowBM]=useState(false);
+  const bankInit=useRef(false);
+  if(!bankInit.current&&saved.length>0&&!(ci.banks[0]||{}).bankName){
+    bankInit.current=true;const bk=saved[0];const nb=[...ci.banks];nb[0]={bankName:bk.bankName,branchName:bk.branchName,accountType:bk.accountType,accountNumber:bk.accountNumber};setCi({...ci,banks:nb});
+  }
   const tsv=genTSV(ci,items,expList,extras,rate,g);
   const doCopy=()=>navigator.clipboard.writeText(tsv).then(()=>alert("コピーしました！"));
   const doDL=()=>{const b=new Blob(["\uFEFF"+tsv],{type:"text/tab-separated-values;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`帳票_${ci.caseNumber||"案件"}.tsv`;a.click();};
@@ -574,7 +579,7 @@ function Export({ci,setCi,items,expList,extras,rate,g,onClose,saved,setSaved}){
       <div className="w-full max-w-xl rounded-t-2xl sm:rounded-2xl" style={{background:"#fff",maxHeight:"90vh",display:"flex",flexDirection:"column"}}>
         <div className="flex justify-between items-center px-5 pt-5 pb-2 flex-shrink-0"><h3 className="text-base font-bold">帳票エクスポート</h3><button onClick={onClose} className="text-xl px-2" style={{color:"#8393a7"}}>×</button></div>
         <div className="flex-1 overflow-y-auto px-5 pb-3">
-          <div className="grid grid-cols-2 gap-x-3"><Inp label="事務所" value={ci.office} onChange={v=>u({office:v})} type="text" /><Inp label="請求日" value={ci.billingDate} onChange={v=>u({billingDate:v})} type="text" /></div>
+          <div className="grid grid-cols-2 gap-x-3"><Inp label="事務所" value={ci.office} onChange={v=>u({office:v})} type="text" /><Inp label="請求日" value={ci.billingDate} onChange={v=>u({billingDate:v})} type="date" /></div>
           <div className="grid grid-cols-2 gap-x-3"><Inp label="事件番号" value={ci.caseNumber} onChange={v=>u({caseNumber:v})} type="text" />
             <div className="mb-3"><label className="block text-xs font-medium mb-1" style={{color:"#566275"}}>得意先</label>
               <input list="dl-clients" type="text" value={ci.client} onChange={e=>u({client:e.target.value})}
@@ -627,7 +632,7 @@ export default function App(){
   const[stdItems,setStdItems]=useState(()=>DEF_STD_ITEMS.map(s=>({...s})));
   const[enabledSc,setEnabledSc]=useState({});
   const[commonOpen,setCommonOpen]=useState(true);
-  const[ci,setCi]=useState({office:"司法書士法人そうぞう",billingDate:new Date().toISOString().slice(0,10).replace(/-/g,"/"),caseNumber:"",client:"",customers:[{title:"様"},{},{}],banks:[{},{}],withholding:false,note:"",memo:""});
+  const[ci,setCi]=useState({office:"司法書士法人そうぞう",billingDate:new Date().toISOString().slice(0,10),caseNumber:"",client:"",customers:[{title:"様"},{},{}],banks:[{},{}],withholding:false,note:"",memo:""});
 
   useEffect(()=>{try{const r=localStorage.getItem("saved-banks");if(r){const p=JSON.parse(r);if(Array.isArray(p))setSaved(p);}}catch{};},[]);
   useEffect(()=>{try{localStorage.setItem("saved-banks",JSON.stringify(saved));}catch{};},[saved]);
