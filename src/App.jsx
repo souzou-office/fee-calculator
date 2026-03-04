@@ -130,7 +130,7 @@ function calcItem(it,g){
   const ep=Math.max(0,((it.propCount||1)-1))*propAddUnit;
   let sc=0;const scItems=[];
   if(!isSimpleType){g.surcharges.forEach(s=>{if(g.enabledSc[s.id]){sc+=s.amount;scItems.push(s);}});}
-  const fee=fb+ep+sc;
+  const fee=fb+ep;
   const txd=calcTaxDetail(it.type,it,g.housingCert);
   return{fee,fb,ep,sc,scItems,tax:txd.total,txd,lv,col,isSimpleType,propAddUnit};
 }
@@ -158,9 +158,11 @@ function genTSV(ci,items,expList,extras,rate,g){
   {const b=ci.banks[0]||{};p("振込先①",b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");}
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
   items.forEach(it=>{const c=calcItem(it,g);p("作業項目",LB[it.type]||it.type,String(c.fee),String(c.tax));});
+  const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
+  if(scTotal>0){const names=g.surcharges.filter(sc=>g.enabledSc[sc.id]).map(sc=>sc.name).join("・");p("作業項目",names,String(scTotal),"0");}
   stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0&&si.fee>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(c*si.fee),"0");});
-  extras.forEach(e=>{const f=Number(e.fee)||0;const exp=Number(e.expense)||0;const total=f+exp;if(total>0)p("作業項目",e.name||"その他",String(total),"0");});
   expList.forEach(e=>{if(e.src!=="std"&&e.src!=="extra")p("作業項目",e.name,String(e.amount),"0");});
+  extras.forEach(e=>{const f=Number(e.fee)||0;const exp=Number(e.expense)||0;const total=f+exp;if(total>0)p("作業項目",e.name||"その他",String(total),"0");});
   p("備考",ci.note||"");p("メモ",ci.memo||"");
   return L.join("\n");
 }
@@ -479,7 +481,6 @@ function Card({item,index,onUpdate,onRemove,g}){
         <Rw label="報酬（税抜）" value={fmt(r.fee)} bold />
         <Rw label={r.isSimpleType?`　基本（${r.col}）`:`　基本（${r.col} / ${fmtM(r.lv)}）`} value={fmt(r.fb)} sub />
         {r.ep>0&&<Rw label={`　不動産加算 (${(item.propCount||1)-1}個×${r.propAddUnit.toLocaleString()})`} value={fmt(r.ep)} sub />}
-        {r.scItems.map(s=><Rw key={s.id} label={`　${s.name}`} value={fmt(s.amount)} sub />)}
         <div className="flex justify-between items-center py-1.5" style={{borderBottom:"1px solid #edf0f5"}}>
           <span className="text-sm font-medium" style={{color:"#3a4557"}}>登録免許税</span>
           <div className="flex items-center gap-2">
@@ -648,7 +649,8 @@ export default function App(){
   const xfee=useMemo(()=>getXFee(counts,stdItems,extras),[counts,stdItems,extras]);
   const tot=useMemo(()=>{
     let tf=0,tt=0;items.forEach(it=>{const c=calcItem(it,g);tf+=c.fee;tt+=c.tax;});
-    tf+=xfee;const et=expList.reduce((s,e)=>s+e.amount,0);const ct=Math.floor(tf*rate/100);
+    const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
+    tf+=scTotal+xfee;const et=expList.reduce((s,e)=>s+e.amount,0);const ct=Math.floor(tf*rate/100);
     return{tf,tt,ct,et,g:tf+ct+tt+et};
   },[items,rate,expList,xfee,g]);
 
