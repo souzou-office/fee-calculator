@@ -436,8 +436,8 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
 }
 
 // ── Card ──
-function Card({item,index,onUpdate,onRemove,g}){
-  const u=p=>onUpdate({...item,...p});const r=calcItem(item,g);
+function Card({item,index,onUpdate,onRemove,g,addFee=0}){
+  const u=p=>onUpdate({...item,...p});const r=calcItem(item,g);const dispFee=index===0?r.fee+addFee:r.fee;
   const needDA=["mortgage","rootMortgage"].includes(item.type);
   const dM=Math.ceil((item.debtAmount||0)/10000);
   const cl={transfer:"#2563eb",preservation:"#059669",mortgage:"#d97706",rootMortgage:"#dc2626",deletion:"#6b7280",addressChange:"#6b7280"};
@@ -478,9 +478,10 @@ function Card({item,index,onUpdate,onRemove,g}){
           note={item.debtAmount?`→ ${fmtM(dM)}区分`:"報酬・登免税ともにこの金額ベース"} />
       </div>}
       <div className="mt-2 pt-3" style={{borderTop:"1px dashed #dce1ea"}}>
-        <Rw label="報酬（税抜）" value={fmt(r.fee)} bold />
+        <Rw label="報酬（税抜）" value={fmt(dispFee)} bold />
         <Rw label={r.isSimpleType?`　基本（${r.col}）`:`　基本（${r.col} / ${fmtM(r.lv)}）`} value={fmt(r.fb)} sub />
         {r.ep>0&&<Rw label={`　不動産加算 (${(item.propCount||1)-1}個×${r.propAddUnit.toLocaleString()})`} value={fmt(r.ep)} sub />}
+        {addFee>0&&index===0&&<Rw label="　加算・追加報酬" value={fmt(addFee)} sub />}
         <div className="flex justify-between items-center py-1.5" style={{borderBottom:"1px solid #edf0f5"}}>
           <span className="text-sm font-medium" style={{color:"#3a4557"}}>登録免許税</span>
           <div className="flex items-center gap-2">
@@ -500,7 +501,7 @@ function Card({item,index,onUpdate,onRemove,g}){
             ))}
           </div>
         )}
-        <Rw label="小計" value={fmt(r.fee+r.tax)} hl bold />
+        <Rw label="小計" value={fmt(dispFee+r.tax)} hl bold />
       </div>
     </div>);
 }
@@ -647,6 +648,7 @@ export default function App(){
 
   const expList=useMemo(()=>getExpList(counts,stdItems,postage,extras),[counts,stdItems,postage,extras]);
   const xfee=useMemo(()=>getXFee(counts,stdItems,extras),[counts,stdItems,extras]);
+  const cardAddFee=useMemo(()=>{const sc=surcharges.reduce((s,sc)=>s+(enabledSc[sc.id]?sc.amount:0),0);const ef=extras.reduce((s,e)=>s+(Number(e.fee)||0),0);return sc+ef;},[surcharges,enabledSc,extras]);
   const tot=useMemo(()=>{
     let tf=0,tt=0;items.forEach(it=>{const c=calcItem(it,g);tf+=c.fee;tt+=c.tax;});
     const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
@@ -708,7 +710,7 @@ export default function App(){
             </>:<div className="text-xs" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</div>}
           </div>
 
-          {items.map((it,i)=><Card key={i} item={it} index={i} g={g} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
+          {items.map((it,i)=><Card key={i} item={it} index={i} g={g} addFee={cardAddFee} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
           <div className="flex gap-2 mb-4 flex-wrap">
             {[["transfer","＋移転"],["preservation","＋保存"],["mortgage","＋抵当権"],["rootMortgage","＋根抵当"],["deletion","＋抹消"],["addressChange","＋住変"]].map(([t,l])=>(
               <button key={t} onClick={()=>setItems(p=>[...p,mk(t)])} className="py-2 px-3 rounded-xl text-xs font-medium hover:shadow-md"
