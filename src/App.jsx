@@ -153,7 +153,7 @@ function getXFee(counts,stdItems,extras){
 function genTSV(ci,items,expList,extras,rate,g){
   const{unit,stdItems,counts}=g;const L=[];const p=(...v)=>L.push(v.join("\t"));
   const bd=(ci.billingDate||"").replace(/-/g,"/").replace(/\/0/g,"/");
-  p("事務所",ci.office);p("請求日",bd,"事件番号",ci.caseNumber);p("得意先",ci.client);
+  p("事務所",ci.office);p("請求日",bd);p("事件番号",ci.caseNumber);p("得意先",ci.client);
   ["①","②","③"].forEach((s,i)=>{const c=ci.customers[i]||{};p(`顧客名${s}`,c.name||"",c.title||"");});
   ["①","②"].forEach((s,i)=>{const b=ci.banks[i]||{};p(`振込先${s}`,b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");});
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
