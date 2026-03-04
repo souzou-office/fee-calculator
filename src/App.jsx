@@ -530,6 +530,37 @@ function BankMgr({saved,setSaved,onSelect,onClose}){
 }
 
 // ── Export ──
+const CLIENTS=[
+  "フラックスコーポレーション株式会社","Ｎｉｋｋｏｒｉ　Ｈｏｕｓｅ株式会社","株式会社令和不動産",
+  "株式会社ＡＲＣＨＩ　ＰＲＯＤＵＣＴＳ","株式会社エバーレンディング","まごころ不動産株式会社",
+  "建築プランナー株式会社","株式会社プロムレット","西日本シティ銀行大橋駅前支店",
+  "西日本シティ銀行　白木原支店","佐賀銀行　春日南支店","福岡銀行　二日市支店",
+  "福岡銀行　春日原支店","ハナ銀行","株式会社ファミリーライフサービス",
+  "ランドスペース有限会社","株式会社エム不動産","株式会社大興不動産",
+  "三真不動産株式会社","株式会社ＳＥＣ","株式会社東武住販",
+  "株式会社エンイノベーションズ","株式会社ＵＭＩプランニング","株式会社サンハウス",
+  "株式会社サムライフ","ｔｒｙ株式会社","株式会社ファレノホールディングス",
+  "ブルーエステート株式会社","株式会社ルームコンサルティング","株式会社ノヴァイフ",
+  "ＬＵＣＫＹ　ＦＩＥＬＤ株式会社","株式会社ＰＬＥＡＳＴ","積水ハウス不動産九州株式会社",
+  "株式会社ベストブライト","積水ハウス株式会社","悠悠ホーム株式会社",
+  "株式会社テンマインド","株式会社エステート三丁目","六家株式会社",
+  "株式会社カチタス飯塚店","福徳ハウジング","三幸不動産",
+  "三井住友トラスト不動産株式会社","西鉄不動産株式会社大野城駅前店","西鉄不動産株式会社二日市店",
+  "株式会社ＮＩパートーナーズ","株式会社カチタス北九州店","有限会社セゾンホーム",
+  "株式会社コスモサービス","不動産マーケティング福岡株式会社","株式会社ほがらかハウジング",
+  "株式会社Ｗａｋｗｏｒｋｓ","有限会社シーズコーポレーション","株式会社フェリスマネジメント",
+  "株式会社レジアスコーポレーション","株式会社ベーシック","株式会社フォレストヴィラホーム",
+  "西鉄不動産小郡三国が丘店","株式会社愛和不動産","株式会社サンコービルド",
+  "行政書士松田知樹","弁護士柴山真人","税理士平田和寛",
+  "土地家屋調査士三宅裕司","税理士飯塚貴司","税理士法人たかはし事務所",
+  "弁護士川﨑尊義","税理士大場雅昭","髙田宏一郎",
+  "税理士・行政書士三好美貴","行政書士保利国際法務事務所","弁護士鍋嶋隆志",
+  "行政書士木村和生","税理士法人吉田会計事務所","税理士上村寿映明",
+  "税理士法人Gardens","陳海燕国際法務事務所","株式会社DOORS",
+  "株式会社Deep30","不動産登記（一般）","不動産登記（相続）",
+  "商業登記","その他の業務","マザーホーム㈱",
+  "佐賀共栄銀行","福岡信用金庫",
+];
 function Export({ci,setCi,items,expList,extras,rate,g,onClose,saved,setSaved}){
   const u=p=>setCi({...ci,...p});const uc=(i,p)=>{const c=[...ci.customers];c[i]={...(c[i]||{}),...p};u({customers:c});};
   const ub=(i,p)=>{const b=[...ci.banks];b[i]={...(b[i]||{}),...p};u({banks:b});};
@@ -544,7 +575,14 @@ function Export({ci,setCi,items,expList,extras,rate,g,onClose,saved,setSaved}){
         <div className="flex justify-between items-center px-5 pt-5 pb-2 flex-shrink-0"><h3 className="text-base font-bold">帳票エクスポート</h3><button onClick={onClose} className="text-xl px-2" style={{color:"#8393a7"}}>×</button></div>
         <div className="flex-1 overflow-y-auto px-5 pb-3">
           <div className="grid grid-cols-2 gap-x-3"><Inp label="事務所" value={ci.office} onChange={v=>u({office:v})} type="text" /><Inp label="請求日" value={ci.billingDate} onChange={v=>u({billingDate:v})} type="text" /></div>
-          <div className="grid grid-cols-2 gap-x-3"><Inp label="事件番号" value={ci.caseNumber} onChange={v=>u({caseNumber:v})} type="text" /><Inp label="得意先" value={ci.client} onChange={v=>u({client:v})} type="text" /></div>
+          <div className="grid grid-cols-2 gap-x-3"><Inp label="事件番号" value={ci.caseNumber} onChange={v=>u({caseNumber:v})} type="text" />
+            <div className="mb-3"><label className="block text-xs font-medium mb-1" style={{color:"#566275"}}>得意先</label>
+              <input list="dl-clients" type="text" value={ci.client} onChange={e=>u({client:e.target.value})}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
+                style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",color:"#1a2233"}}
+                onFocus={e=>{e.target.style.borderColor="#3d7ce0";e.target.style.background="#fff"}}
+                onBlur={e=>{e.target.style.borderColor="#dce1ea";e.target.style.background="#f0f3f8"}} />
+              <datalist id="dl-clients">{CLIENTS.map(c=><option key={c} value={c}/>)}</datalist></div></div>
           <h4 className="text-xs font-bold mt-2 mb-2" style={{color:"#566275"}}>顧客名</h4>
           {[0,1,2].map(i=><div key={i} className="grid gap-x-2 mb-1" style={{gridTemplateColumns:"1fr auto"}}><Inp placeholder={`顧客名${["①","②","③"][i]}`} value={(ci.customers[i]||{}).name||""} onChange={v=>uc(i,{name:v})} type="text" /><div style={{width:90}}><Sel value={(ci.customers[i]||{}).title||""} onChange={v=>uc(i,{title:v})} options={[{value:"",label:"なし"},{value:"様",label:"様"},{value:"御中",label:"御中"}]} /></div></div>)}
           <h4 className="text-xs font-bold mt-2 mb-2 flex items-center justify-between" style={{color:"#566275"}}><span>振込先</span><button onClick={()=>setShowBM(true)} className="text-xs px-2 py-1 rounded-lg" style={{background:"#eef2ff",color:"#3d7ce0"}}>マスタ</button></h4>
