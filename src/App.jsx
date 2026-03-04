@@ -158,10 +158,9 @@ function genTSV(ci,items,expList,extras,rate,g){
   {const b=ci.banks[0]||{};p("振込先①",b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");}
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
   const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
-  const extraFee=extras.reduce((s,e)=>s+(Number(e.fee)||0),0);
-  if(scTotal>0){const names=g.surcharges.filter(sc=>g.enabledSc[sc.id]).map(sc=>sc.name).join("・");p("作業項目",names,String(scTotal),"0");}
-  items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+extraFee:c.fee;p("作業項目",LB[it.type]||it.type,String(f),String(c.tax));});
+  items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+scTotal:c.fee;p("作業項目",LB[it.type]||it.type,String(f),String(c.tax));});
   stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0){const fee=c*si.fee;const jippi=c*si.jippi;if(fee>0||jippi>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(fee),String(jippi));}});
+  extras.forEach(e=>{const f=Number(e.fee)||0;const x=Number(e.expense)||0;if(f>0||x>0)p("作業項目",e.name||"その他",String(f),String(x));});
   expList.forEach(e=>{if(e.src!=="std"&&e.src!=="extra")p("作業項目",e.name,String(e.amount),"0");});
   p("備考",ci.note||"");p("メモ",ci.memo||"");
   return L.join("\n");
@@ -436,8 +435,8 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
 }
 
 // ── Card ──
-function Card({item,index,onUpdate,onRemove,g,addFee=0}){
-  const u=p=>onUpdate({...item,...p});const r=calcItem(item,g);const dispFee=index===0?r.fee+addFee:r.fee;
+function Card({item,index,onUpdate,onRemove,g,scTotal=0}){
+  const u=p=>onUpdate({...item,...p});const r=calcItem(item,g);const dispFee=index===0?r.fee+scTotal:r.fee;
   const needDA=["mortgage","rootMortgage"].includes(item.type);
   const dM=Math.ceil((item.debtAmount||0)/10000);
   const cl={transfer:"#2563eb",preservation:"#059669",mortgage:"#d97706",rootMortgage:"#dc2626",deletion:"#6b7280",addressChange:"#6b7280"};
@@ -481,7 +480,7 @@ function Card({item,index,onUpdate,onRemove,g,addFee=0}){
         <Rw label="報酬（税抜）" value={fmt(dispFee)} bold />
         <Rw label={r.isSimpleType?`　基本（${r.col}）`:`　基本（${r.col} / ${fmtM(r.lv)}）`} value={fmt(r.fb)} sub />
         {r.ep>0&&<Rw label={`　不動産加算 (${(item.propCount||1)-1}個×${r.propAddUnit.toLocaleString()})`} value={fmt(r.ep)} sub />}
-        {addFee>0&&index===0&&<Rw label="　加算・追加報酬" value={fmt(addFee)} sub />}
+        {scTotal>0&&index===0&&<Rw label="　加算" value={fmt(scTotal)} sub />}
         <div className="flex justify-between items-center py-1.5" style={{borderBottom:"1px solid #edf0f5"}}>
           <span className="text-sm font-medium" style={{color:"#3a4557"}}>登録免許税</span>
           <div className="flex items-center gap-2">
@@ -648,13 +647,12 @@ export default function App(){
 
   const expList=useMemo(()=>getExpList(counts,stdItems,postage,extras),[counts,stdItems,postage,extras]);
   const xfee=useMemo(()=>getXFee(counts,stdItems,extras),[counts,stdItems,extras]);
-  const cardAddFee=useMemo(()=>extras.reduce((s,e)=>s+(Number(e.fee)||0),0),[extras]);
+  const scTotal=useMemo(()=>surcharges.reduce((s,sc)=>s+(enabledSc[sc.id]?sc.amount:0),0),[surcharges,enabledSc]);
   const tot=useMemo(()=>{
     let tf=0,tt=0;items.forEach(it=>{const c=calcItem(it,g);tf+=c.fee;tt+=c.tax;});
-    const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
     tf+=scTotal+xfee;const et=expList.reduce((s,e)=>s+e.amount,0);const ct=Math.floor(tf*rate/100);
     return{tf,tt,ct,et,g:tf+ct+tt+et};
-  },[items,rate,expList,xfee,g]);
+  },[items,rate,expList,xfee,scTotal,g]);
 
   const autoLabel=hasTr&&hasMtg?"移転＋設定 → 移転(設定有) / 抵当権設定テーブル"
     :hasTr?"移転のみ → 移転(設定無)テーブル"
@@ -710,7 +708,7 @@ export default function App(){
             </>:<div className="text-xs" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</div>}
           </div>
 
-          {items.map((it,i)=><Card key={i} item={it} index={i} g={g} addFee={cardAddFee} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
+          {items.map((it,i)=><Card key={i} item={it} index={i} g={g} scTotal={scTotal} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
           <div className="flex gap-2 mb-4 flex-wrap">
             {[["transfer","＋移転"],["preservation","＋保存"],["mortgage","＋抵当権"],["rootMortgage","＋根抵当"],["deletion","＋抹消"],["addressChange","＋住変"]].map(([t,l])=>(
               <button key={t} onClick={()=>setItems(p=>[...p,mk(t)])} className="py-2 px-3 rounded-xl text-xs font-medium hover:shadow-md"
