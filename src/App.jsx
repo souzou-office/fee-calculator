@@ -231,7 +231,7 @@ function ExtraItem({item,index,total,onChange,onRemove,onMove}){
     </div>
     {open&&<div className="px-3 pt-2 pb-3" style={{background:"#fff"}}>
       <Inp label="項目名" value={item.name} onChange={v=>onChange({...item,name:v})} type="text" placeholder="例: 日当・交通費" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
+      <div className="grid grid-cols-2 gap-x-3">
         <Inp label="報酬（税対象）" value={item.fee} onChange={v=>onChange({...item,fee:v})} suffix="円" placeholder="0" />
         <Inp label="立替金（実費）" value={item.expense} onChange={v=>onChange({...item,expense:v})} suffix="円" placeholder="0" />
       </div>
@@ -288,11 +288,11 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
   const rmSI=(i)=>setStdItems(p=>p.filter((_,j)=>j!==i));
 
   return(
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}>
-      <div className="rounded-t-2xl sm:rounded-2xl relative w-full sm:w-auto" style={{background:"#fff",width:typeof window!=="undefined"&&window.innerWidth<640?"100%":modalSize.w,height:typeof window!=="undefined"&&window.innerWidth<640?"95vh":modalSize.h,maxWidth:"98vw",maxHeight:"98vh",display:"flex",flexDirection:"column",boxShadow:"0 25px 50px rgba(0,0,0,0.15)"}}>
-        <div className="flex justify-between items-center px-4 sm:px-5 pt-4 pb-2 flex-shrink-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background:"rgba(0,0,0,0.5)"}}>
+      <div className="rounded-2xl relative" style={{background:"#fff",width:modalSize.w,height:modalSize.h,maxWidth:"98vw",maxHeight:"98vh",display:"flex",flexDirection:"column",boxShadow:"0 25px 50px rgba(0,0,0,0.15)"}}>
+        <div className="flex justify-between items-center px-5 pt-4 pb-2 flex-shrink-0">
           <h3 className="text-base font-bold" style={{color:"#1a2233"}}>報酬設定</h3>
-          <div className="flex items-center gap-2"><span className="text-xs select-none hidden sm:inline" style={{color:"#b0b8c4"}}>↘ 角ドラッグでリサイズ</span>
+          <div className="flex items-center gap-2"><span className="text-xs select-none" style={{color:"#b0b8c4"}}>↘ 角ドラッグでリサイズ</span>
             <button onClick={onClose} className="text-xl px-2" style={{color:"#8393a7"}}>×</button></div>
         </div>
         <div className="flex gap-1 px-5 pb-2 flex-shrink-0">
@@ -445,7 +445,7 @@ function Card({item,index,onUpdate,onRemove,g}){
         <div className="flex items-center gap-2"><div className="w-1.5 h-6 rounded-full" style={{background:cl[item.type]}} />
           <span className="text-xs font-bold" style={{color:cl[item.type]}}>{LB[item.type]} #{index+1}</span></div>
         <button onClick={onRemove} className="text-xs px-2 py-1 rounded hover:bg-red-50" style={{color:"#e53e3e"}}>削除</button></div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
+      <div className="grid grid-cols-2 gap-x-3">
         <Sel label="登記種別" value={item.type} onChange={v=>u({type:v})} options={[
           {value:"transfer",label:"所有権移転"},{value:"preservation",label:"所有権保存"},
           {value:"mortgage",label:"抵当権設定"},{value:"rootMortgage",label:"根抵当権設定"},
@@ -623,66 +623,68 @@ export default function App(){
   return(
     <div className="min-h-screen" style={{background:"linear-gradient(160deg,#f5f7fb,#e8ecf4)",fontFamily:"'Noto Sans JP',sans-serif"}}>
       <header className="sticky top-0 z-10 backdrop-blur-md" style={{background:"rgba(255,255,255,0.88)",borderBottom:"1px solid #e5e9f0"}}>
-        <div style={{maxWidth:1280}} className="mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{background:"linear-gradient(135deg,#1e3a5f,#3d7ce0)"}}>
+        <div style={{maxWidth:1600}} className="mx-auto px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background:"linear-gradient(135deg,#1e3a5f,#3d7ce0)"}}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/></svg>
             </div>
-            <div className="min-w-0"><h1 className="text-xs sm:text-sm font-bold truncate" style={{color:"#1a2233"}}>報酬・登録免許税 自動計算</h1><p className="text-xs hidden sm:block" style={{color:"#8393a7"}}>報酬基準表準拠</p></div>
+            <div><h1 className="text-sm font-bold" style={{color:"#1a2233"}}>報酬・登録免許税 自動計算</h1><p className="text-xs" style={{color:"#8393a7"}}>報酬基準表準拠</p></div>
           </div>
-          <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
-            <button onClick={()=>setShowCfg(true)} className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium" style={{background:"#4338ca",color:"#fff"}}>設定</button>
-            <button onClick={()=>setShowEx(true)} className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium hidden sm:block" style={{background:"#059669",color:"#fff"}}>帳票出力</button>
+          <div className="flex gap-2">
+            <button onClick={()=>setShowCfg(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{background:"#4338ca",color:"#fff"}}>設定</button>
+            <button onClick={()=>setShowEx(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{background:"#059669",color:"#fff"}}>帳票出力</button>
           </div>
         </div>
       </header>
-      <main style={{maxWidth:1280}} className="mx-auto px-4 sm:px-6 py-5 pb-28 md:pb-5 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-        {/* ── 左カラム: 共通設定 + 取引項目 ── */}
-        <div className="min-w-0">
-          <div className="rounded-xl mb-4 overflow-hidden" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
-            <div className="flex items-center justify-between px-4 py-3 cursor-pointer select-none" onClick={()=>setCommonOpen(!commonOpen)}
-              style={{background:"linear-gradient(135deg,#eef2ff,#e8ecf4)"}}>
-              <h3 className="text-xs font-bold" style={{color:"#4338ca"}}>共通設定</h3>
-              <div className="flex items-center gap-2">
-                {!commonOpen&&<span className="text-xs hidden md:inline" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</span>}
-                {!commonOpen&&<span className="text-xs md:hidden" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).length>0?`加算${surcharges.filter(s=>s.name&&enabledSc[s.id]).length}件`:"加算なし"}</span>}
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{transform:commonOpen?"rotate(180deg)":"",transition:"transform 0.2s",flexShrink:0}}>
-                  <path d="M2 3.5l3 3 3-3" stroke="#4338ca" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
+
+      {/* ── 共通設定バナー（フルワイド） ── */}
+      <div style={{maxWidth:1600}} className="mx-auto px-8 pt-5">
+        <div className="rounded-xl overflow-hidden" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
+          <div className="flex items-center justify-between px-5 py-3 cursor-pointer select-none" onClick={()=>setCommonOpen(!commonOpen)}
+            style={{background:"linear-gradient(135deg,#eef2ff,#e8ecf4)"}}>
+            <h3 className="text-xs font-bold" style={{color:"#4338ca"}}>共通設定</h3>
+            <div className="flex items-center gap-2">
+              {!commonOpen&&<span className="text-xs" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</span>}
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{transform:commonOpen?"rotate(180deg)":"",transition:"transform 0.2s",flexShrink:0}}>
+                <path d="M2 3.5l3 3 3-3" stroke="#4338ca" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
-            {commonOpen&&<div className="px-4 pb-4 pt-2">
-              <div className="text-xs mb-3 px-2 py-1.5 rounded-lg" style={{background:"#eef2ff",color:"#4338ca"}}>{autoLabel}</div>
+          </div>
+          {commonOpen&&<div className="px-5 pb-4 pt-3">
+            <div className="text-xs mb-3 px-2 py-1.5 rounded-lg inline-block" style={{background:"#eef2ff",color:"#4338ca"}}>{autoLabel}</div>
+            <div className="flex items-start gap-8">
               <div className="flex flex-wrap gap-x-6">
                 {surcharges.map(s=>s.name&&(
                   <Chk key={s.id} label={`${s.name}（+${s.amount.toLocaleString()}円）`}
                     checked={!!enabledSc[s.id]} onChange={()=>toggleSc(s.id)} accent="#f59e0b" />
                 ))}
               </div>
-              <Sel label="住宅用家屋証明書" value={housingCert} onChange={setHC} options={[
-                {value:"none",label:"なし（原則税率）"},
-                {value:"general",label:"一般住宅（移転3/1000・保存1.5/1000・設定1/1000）"},
-                {value:"premium",label:"長期優良・低炭素（移転1/1000・保存1/1000・設定1/1000）"},
-              ]} />
-            </div>}
-          </div>
+              <div style={{minWidth:360}}>
+                <Sel label="住宅用家屋証明書" value={housingCert} onChange={setHC} options={[
+                  {value:"none",label:"なし（原則税率）"},
+                  {value:"general",label:"一般住宅（移転3/1000・保存1.5/1000・設定1/1000）"},
+                  {value:"premium",label:"長期優良・低炭素（移転1/1000・保存1/1000・設定1/1000）"},
+                ]} />
+              </div>
+            </div>
+          </div>}
+        </div>
+      </div>
 
+      {/* ── メイン2カラム ── */}
+      <main style={{maxWidth:1600,display:"grid",gridTemplateColumns:"3fr 2fr",gap:24,alignItems:"start"}} className="mx-auto px-8 py-5">
+        {/* ── 左カラム: 取引項目 ── */}
+        <div style={{minWidth:0}}>
           {items.map((it,i)=><Card key={i} item={it} index={i} g={g} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
-          <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 mb-4">
+          <div className="flex gap-2 mb-4 flex-wrap">
             {[["transfer","＋移転"],["preservation","＋保存"],["mortgage","＋抵当権"],["rootMortgage","＋根抵当"],["deletion","＋抹消"],["addressChange","＋住変"]].map(([t,l])=>(
-              <button key={t} onClick={()=>setItems(p=>[...p,mk(t)])} className="py-2.5 sm:py-2 px-3 rounded-xl text-xs font-medium hover:shadow-md text-center"
+              <button key={t} onClick={()=>setItems(p=>[...p,mk(t)])} className="py-2 px-3 rounded-xl text-xs font-medium hover:shadow-md"
                 style={{background:"#fff",border:"1.5px dashed #c5cdd8",color:"#5a6577"}}>{l}</button>
             ))}
           </div>
         </div>
 
-        {/* ── 右カラム: 実費 + 消費税 + 合計 ── */}
-        <div className="min-w-0">
-          {/* モバイル用セクション見出し */}
-          <div className="md:hidden flex items-center gap-3 mb-3 mt-1">
-            <div className="h-px flex-1" style={{background:"linear-gradient(to right,#c7d2fe,transparent)"}} />
-            <span className="text-xs font-bold tracking-wider" style={{color:"#4338ca"}}>実費・合計</span>
-            <div className="h-px flex-1" style={{background:"linear-gradient(to left,#c7d2fe,transparent)"}} />
-          </div>
+        {/* ── 右カラム: 実費 + 消費税 + 合計（sticky） ── */}
+        <div style={{position:"sticky",top:68,minWidth:0}}>
           <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0"}}>
             <h3 className="text-xs font-bold mb-2" style={{color:"#566275"}}>謄本・情報 / 実費</h3>
             {rows.map((row,idx)=>{
@@ -753,9 +755,9 @@ export default function App(){
             </div>}
           </div>
 
-          <div className="rounded-xl p-4 mb-4" style={{background:"#fff",border:"1px solid #e5e9f0"}}><Inp label="消費税率" value={rate} onChange={setRate} suffix="%" min={0} step={1} /></div>
+          <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0"}}><Inp label="消費税率" value={rate} onChange={setRate} suffix="%" min={0} step={1} /></div>
 
-          <div id="summary-section" className="rounded-xl p-5 mb-3" style={{background:"linear-gradient(135deg,#1e3a5f,#2558b3)",color:"#fff"}}>
+          <div className="rounded-xl p-5 mb-3" style={{background:"linear-gradient(135deg,#1e3a5f,#2558b3)",color:"#fff"}}>
             <h3 className="text-xs mb-3" style={{color:"rgba(255,255,255,0.55)"}}>合計</h3>
             {[["報酬（税抜）",fmt(tot.tf)],[`消費税（${rate}%）`,fmt(tot.ct)],["報酬（税込）",fmt(tot.tf+tot.ct)],["登録免許税",fmt(tot.tt)],...(tot.et>0?[["実費・立替金",fmt(tot.et)]]:[])]
               .map(([l,v],i)=><div key={i} className="flex justify-between mb-1"><span className="text-sm" style={{color:"rgba(255,255,255,0.75)"}}>{l}</span><span className="text-sm font-medium" style={{fontVariantNumeric:"tabular-nums"}}>{v}</span></div>)}
@@ -763,38 +765,11 @@ export default function App(){
               <div className="flex justify-between items-baseline"><span className="font-bold">合計請求額</span><span className="text-2xl font-bold" style={{fontVariantNumeric:"tabular-nums"}}>{fmt(tot.g)}</span></div>
             </div>
           </div>
-          <button onClick={()=>setShowEx(true)} className="w-full py-3 rounded-xl text-sm font-bold text-white mb-4 hover:shadow-lg hidden md:block" style={{background:"linear-gradient(135deg,#059669,#047857)"}}>帳票システム用データを出力</button>
+          <button onClick={()=>setShowEx(true)} className="w-full py-3 rounded-xl text-sm font-bold text-white mb-4 hover:shadow-lg" style={{background:"linear-gradient(135deg,#059669,#047857)"}}>帳票システム用データを出力</button>
         </div>
 
-        <p className="text-xs text-center px-4 col-span-full">
-          <span style={{color:"#a0aec0"}}>※ 参考値。土地売買15/1000は令和8年3月31日まで。住宅用家屋証明は令和9年3月31日まで。</span>
-        </p>
+        <p className="text-xs text-center px-4" style={{color:"#a0aec0",gridColumn:"1 / -1"}}>※ 参考値。土地売買15/1000は令和8年3月31日まで。住宅用家屋証明は令和9年3月31日まで。</p>
       </main>
-      {/* ── モバイル用スティッキー合計バー ── */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden z-30" style={{
-        background:"linear-gradient(135deg,#1e3a5f,#2558b3)",
-        borderTop:"1px solid rgba(255,255,255,0.15)",
-        boxShadow:"0 -4px 20px rgba(30,58,95,0.3)"
-      }}>
-        <div className="flex items-center justify-between px-4 py-3 mx-auto" style={{maxWidth:1280}}>
-          <div>
-            <p className="text-xs" style={{color:"rgba(255,255,255,0.55)"}}>合計請求額</p>
-            <p className="text-lg font-bold text-white" style={{fontVariantNumeric:"tabular-nums",lineHeight:1.2}}>{fmt(tot.g)}</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={()=>{const el=document.getElementById("summary-section");if(el)el.scrollIntoView({behavior:"smooth"});}}
-              className="px-3 py-2 rounded-xl text-xs font-medium"
-              style={{background:"rgba(255,255,255,0.15)",color:"#fff",border:"1px solid rgba(255,255,255,0.25)"}}>
-              内訳
-            </button>
-            <button onClick={()=>setShowEx(true)}
-              className="px-4 py-2 rounded-xl text-xs font-bold"
-              style={{background:"linear-gradient(135deg,#10b981,#059669)",color:"#fff"}}>
-              帳票出力
-            </button>
-          </div>
-        </div>
-      </div>
       {showCfg&&<Settings ft={ft} setFt={setFt} unit={unit} setUnit={setUnit} surcharges={surcharges} setSurcharges={setSurcharges} stdItems={stdItems} setStdItems={setStdItems} onClose={()=>setShowCfg(false)} />}
       {showEx&&<Export ci={ci} setCi={setCi} items={items} expList={expList} extras={extras} rate={rate} g={g} onClose={()=>setShowEx(false)} saved={saved} setSaved={setSaved} />}
     </div>);
