@@ -142,7 +142,7 @@ function getExpList(counts,stdItems,postage,extras){
   const l=[];
   stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0&&si.jippi>0)l.push({name:`${si.name} ${c}${si.unitLabel}`,amount:c*si.jippi,src:"std"});});
   if(postage>0)l.push({name:"郵送費",amount:postage});
-  extras.forEach(e=>{const a=Number(e.expense)||0;if(a>0)l.push({name:e.name||"その他",amount:a});});
+  extras.forEach(e=>{const a=Number(e.expense)||0;if(a>0)l.push({name:e.name||"その他",amount:a,src:"extra"});});
   return l;
 }
 function getXFee(counts,stdItems,extras){
@@ -155,12 +155,12 @@ function genTSV(ci,items,expList,extras,rate,g){
   const bd=(ci.billingDate||"").replace(/-/g,"/").replace(/\/0/g,"/");
   p("事務所",ci.office);p("請求日",bd);p("事件番号",ci.caseNumber);p("得意先",ci.client);
   ["①","②","③"].forEach((s,i)=>{const c=ci.customers[i]||{};p(`顧客名${s}`,c.name||"",c.title||"");});
-  ["①","②"].forEach((s,i)=>{const b=ci.banks[i]||{};p(`振込先${s}`,b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");});
+  {const b=ci.banks[0]||{};p("振込先①",b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");}
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
   items.forEach(it=>{const c=calcItem(it,g);p("作業項目",LB[it.type]||it.type,String(c.fee),String(c.tax));});
   stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0&&si.fee>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(c*si.fee),"0");});
-  extras.forEach(e=>{const f=Number(e.fee)||0;if(f>0)p("作業項目",e.name||"その他",String(f),"0");});
-  expList.forEach(e=>{if(e.src!=="std")p("作業項目",e.name,String(e.amount),"0");});
+  extras.forEach(e=>{const f=Number(e.fee)||0;const exp=Number(e.expense)||0;const total=f+exp;if(total>0)p("作業項目",e.name||"その他",String(total),"0");});
+  expList.forEach(e=>{if(e.src!=="std"&&e.src!=="extra")p("作業項目",e.name,String(e.amount),"0");});
   p("備考",ci.note||"");p("メモ",ci.memo||"");
   return L.join("\n");
 }
@@ -591,7 +591,7 @@ function Export({ci,setCi,items,expList,extras,rate,g,onClose,saved,setSaved}){
           <h4 className="text-xs font-bold mt-2 mb-2" style={{color:"#566275"}}>顧客名</h4>
           {[0,1,2].map(i=><div key={i} className="grid gap-x-2 mb-1" style={{gridTemplateColumns:"1fr auto"}}><Inp placeholder={`顧客名${["①","②","③"][i]}`} value={(ci.customers[i]||{}).name||""} onChange={v=>uc(i,{name:v})} type="text" /><div style={{width:90}}><Sel value={(ci.customers[i]||{}).title||""} onChange={v=>uc(i,{title:v})} options={[{value:"",label:"なし"},{value:"様",label:"様"},{value:"御中",label:"御中"}]} /></div></div>)}
           <h4 className="text-xs font-bold mt-2 mb-2 flex items-center justify-between" style={{color:"#566275"}}><span>振込先</span><button onClick={()=>setShowBM(true)} className="text-xs px-2 py-1 rounded-lg" style={{background:"#eef2ff",color:"#3d7ce0"}}>マスタ</button></h4>
-          {[0,1].map(i=><div key={i} className="mb-2"><div className="flex items-center gap-1 mb-1"><span className="text-xs" style={{color:"#8393a7"}}>{["①","②"][i]}</span>{saved.length>0&&<select className="text-xs px-2 py-0.5 rounded border ml-auto" style={{color:"#3d7ce0",borderColor:"#d4deff",background:"#eef2ff"}} value="" onChange={e=>{const b=saved.find(x=>String(x.id)===e.target.value);if(b)sb(b,i);}}><option value="">選択...</option>{saved.map(b=><option key={b.id} value={b.id}>{b.label}</option>)}</select>}</div><div className="grid grid-cols-4 gap-x-2"><Inp placeholder="銀行名" value={(ci.banks[i]||{}).bankName||""} onChange={v=>ub(i,{bankName:v})} type="text" /><Inp placeholder="支店名" value={(ci.banks[i]||{}).branchName||""} onChange={v=>ub(i,{branchName:v})} type="text" /><Inp placeholder="種別" value={(ci.banks[i]||{}).accountType||""} onChange={v=>ub(i,{accountType:v})} type="text" /><Inp placeholder="口座番号" value={(ci.banks[i]||{}).accountNumber||""} onChange={v=>ub(i,{accountNumber:v})} type="text" /></div></div>)}
+          <div className="mb-2"><div className="flex items-center gap-1 mb-1"><span className="text-xs" style={{color:"#8393a7"}}>①</span>{saved.length>0&&<select className="text-xs px-2 py-0.5 rounded border ml-auto" style={{color:"#3d7ce0",borderColor:"#d4deff",background:"#eef2ff"}} value="" onChange={e=>{const b=saved.find(x=>String(x.id)===e.target.value);if(b)sb(b,0);}}><option value="">選択...</option>{saved.map(b=><option key={b.id} value={b.id}>{b.label}</option>)}</select>}</div><div className="grid grid-cols-4 gap-x-2"><Inp placeholder="銀行名" value={(ci.banks[0]||{}).bankName||""} onChange={v=>ub(0,{bankName:v})} type="text" /><Inp placeholder="支店名" value={(ci.banks[0]||{}).branchName||""} onChange={v=>ub(0,{branchName:v})} type="text" /><Inp placeholder="種別" value={(ci.banks[0]||{}).accountType||""} onChange={v=>ub(0,{accountType:v})} type="text" /><Inp placeholder="口座番号" value={(ci.banks[0]||{}).accountNumber||""} onChange={v=>ub(0,{accountNumber:v})} type="text" /></div></div>
           <div className="mt-2"><Chk label="源泉対象" checked={!!ci.withholding} onChange={()=>u({withholding:!ci.withholding})} /></div>
           <div className="grid grid-cols-2 gap-x-3"><Inp label="備考" value={ci.note} onChange={v=>u({note:v})} type="text" /><Inp label="メモ" value={ci.memo} onChange={v=>u({memo:v})} type="text" /></div>
           <h4 className="text-xs font-bold mt-3 mb-2" style={{color:"#566275"}}>プレビュー</h4>
@@ -632,7 +632,7 @@ export default function App(){
   const[stdItems,setStdItems]=useState(()=>DEF_STD_ITEMS.map(s=>({...s})));
   const[enabledSc,setEnabledSc]=useState({});
   const[commonOpen,setCommonOpen]=useState(true);
-  const[ci,setCi]=useState({office:"司法書士法人そうぞう",billingDate:new Date().toISOString().slice(0,10),caseNumber:"",client:"",customers:[{title:"様"},{},{}],banks:[{},{}],withholding:false,note:"",memo:""});
+  const[ci,setCi]=useState({office:"司法書士法人そうぞう",billingDate:new Date().toISOString().slice(0,10),caseNumber:"",client:"",customers:[{title:"様"},{},{}],banks:[{}],withholding:false,note:"",memo:""});
 
   useEffect(()=>{try{const r=localStorage.getItem("saved-banks");if(r){const p=JSON.parse(r);if(Array.isArray(p))setSaved(p);}}catch{};},[]);
   useEffect(()=>{try{localStorage.setItem("saved-banks",JSON.stringify(saved));}catch{};},[saved]);
