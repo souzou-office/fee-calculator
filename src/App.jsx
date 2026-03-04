@@ -249,6 +249,8 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
   const[editVal,setEditVal]=useState("");
   const inputRef=useRef(null);
   const[modalSize,setModalSize]=useState({w:720,h:620});
+  const resetFromJson=(cb)=>{if(!confirm("settings.json のデフォルトに戻しますか？"))return;
+    fetch(import.meta.env.BASE_URL+"settings.json").then(r=>r.json()).then(cb).catch(()=>alert("settings.json の読み込みに失敗しました"));};
 
   const onResizeStart=(e)=>{
     e.preventDefault();const sx=e.clientX||e.touches?.[0]?.clientX;const sy=e.clientY||e.touches?.[0]?.clientY;
@@ -305,7 +307,7 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
             ))}
             <button onClick={addSc} className="text-xs py-2 px-4 rounded-lg font-medium w-full mt-1"
               style={{color:"#4338ca",background:"#eef2ff",border:"1.5px dashed #c7d2fe"}}>＋ 加算項目を追加</button>
-            <button onClick={()=>{if(confirm("デフォルトに戻しますか？"))setSurcharges(DEF_SURCHARGES.map(s=>({...s})));}}
+            <button onClick={()=>resetFromJson(d=>{if(d.surcharges)setSurcharges(d.surcharges);})}
               className="mt-2 text-xs px-3 py-1.5 rounded-lg" style={{color:"#e53e3e",background:"#fef2f2"}}>デフォルトに戻す</button>
 
             <h4 className="text-xs font-bold mt-5 mb-3" style={{color:"#4338ca"}}>基本報酬（抹消・住変）</h4>
@@ -318,7 +320,7 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
 
             <h4 className="text-xs font-bold mt-5 mb-3" style={{color:"#4338ca"}}>その他単価</h4>
             <Inp label="不動産加算（移転・保存・設定 1個あたり）" value={unit.propAdd} onChange={v=>setUnit({...unit,propAdd:v})} suffix="円" />
-            <button onClick={()=>{if(confirm("デフォルトに戻しますか？"))setUnit({...DEF_UNIT});}}
+            <button onClick={()=>resetFromJson(d=>{if(d.unit)setUnit({...d.unit});})}
               className="mt-1 text-xs px-3 py-1.5 rounded-lg" style={{color:"#e53e3e",background:"#fef2f2"}}>デフォルトに戻す</button>
           </div>}
 
@@ -364,14 +366,14 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
             ))}
             <button onClick={addSI} className="text-xs py-2 px-4 rounded-lg font-medium w-full mt-1"
               style={{color:"#4338ca",background:"#eef2ff",border:"1.5px dashed #c7d2fe"}}>＋ 項目を追加</button>
-            <button onClick={()=>{if(confirm("デフォルトに戻しますか？"))setStdItems(DEF_STD_ITEMS.map(s=>({...s})));}}
+            <button onClick={()=>resetFromJson(d=>{if(Array.isArray(d.stdItems))setStdItems(d.stdItems);})}
               className="mt-2 text-xs px-3 py-1.5 rounded-lg" style={{color:"#e53e3e",background:"#fef2f2"}}>デフォルトに戻す</button>
           </div>}
 
           {tab==="table"&&<div>
             <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
               <p className="text-xs" style={{color:"#8393a7"}}>セルをタップして編集（全{ft.length}行）</p>
-              <button onClick={()=>{if(confirm("デフォルトに戻しますか？"))setFt(DEF_FT.map(r=>[...r]));}}
+              <button onClick={()=>resetFromJson(d=>{if(d.ft)setFt(d.ft);})}
                 className="text-xs px-3 py-1.5 rounded-lg" style={{color:"#e53e3e",background:"#fef2f2"}}>デフォルトに戻す</button>
             </div>
             <div className="overflow-auto rounded-lg" style={{border:"1px solid #e5e9f0",flex:"1 1 auto"}}>
@@ -571,8 +573,16 @@ export default function App(){
 
   useEffect(()=>{try{const r=localStorage.getItem("saved-banks");if(r){const p=JSON.parse(r);if(Array.isArray(p))setSaved(p);}}catch{};},[]);
   useEffect(()=>{try{localStorage.setItem("saved-banks",JSON.stringify(saved));}catch{};},[saved]);
-  useEffect(()=>{try{const r=localStorage.getItem("fee-config-v4");if(r){const d=JSON.parse(r);if(d.ft)setFt(d.ft);if(d.unit)setUnit(u=>({...u,...d.unit}));if(d.surcharges)setSurcharges(d.surcharges);if(Array.isArray(d.stdItems))setStdItems(d.stdItems.filter(si=>si&&si.id&&si.name));}}catch{};},[]);
-  useEffect(()=>{try{localStorage.setItem("fee-config-v4",JSON.stringify({ft,unit,surcharges,stdItems}));}catch{};},[ft,unit,surcharges,stdItems]);
+  useEffect(()=>{
+    fetch(import.meta.env.BASE_URL+"settings.json")
+      .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+      .then(d=>{
+        if(d.ft)setFt(d.ft);
+        if(d.unit)setUnit(u=>({...u,...d.unit}));
+        if(d.surcharges)setSurcharges(d.surcharges);
+        if(Array.isArray(d.stdItems))setStdItems(d.stdItems.filter(si=>si&&si.id&&si.name));
+      }).catch(()=>{});
+  },[]);
 
   const hasTr=items.some(i=>i.type==="transfer");
   const hasMtg=items.some(i=>["mortgage","rootMortgage"].includes(i.type));
