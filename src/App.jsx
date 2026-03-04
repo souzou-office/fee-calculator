@@ -150,7 +150,7 @@ function getXFee(counts,stdItems,extras){
   extras.forEach(e=>f+=(Number(e.fee)||0));return f;
 }
 
-function genTSV(ci,items,expList,extras,rate,g){
+function genTSV(ci,items,rows,rate,g){
   const{unit,stdItems,counts}=g;const L=[];const p=(...v)=>L.push(v.join("\t"));
   const bd=(ci.billingDate||"").replace(/-/g,"/").replace(/\/0/g,"/");
   p("事務所",ci.office);p("請求日",bd);p("事件番号",ci.caseNumber);p("得意先",ci.client);
@@ -159,9 +159,11 @@ function genTSV(ci,items,expList,extras,rate,g){
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
   const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
   items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+scTotal:c.fee;p("作業項目",LB[it.type]||it.type,String(f),String(c.tax));});
-  stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0){const fee=c*si.fee;const jippi=c*si.jippi;if(fee>0||jippi>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(fee),String(jippi));}});
-  extras.forEach(e=>{const f=Number(e.fee)||0;const x=Number(e.expense)||0;if(f>0||x>0)p("作業項目",e.name||"その他",String(f),String(x));});
-  expList.forEach(e=>{if(e.src!=="std"&&e.src!=="extra")p("作業項目",e.name,String(e.amount),"0");});
+  rows.forEach(row=>{
+    if(row.kind==="std"){const si=stdItems.find(s=>s.id===row.stdId);if(!si)return;const c=row.count||0;if(c>0){const fee=c*si.fee;const jippi=c*si.jippi;if(fee>0||jippi>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(fee),String(jippi));}}
+    else if(row.kind==="postage"){const a=row.amount||0;if(a>0)p("作業項目","郵送費","0",String(a));}
+    else if(row.kind==="extra"){const f=Number(row.fee)||0;const x=Number(row.expense)||0;if(f>0||x>0)p("作業項目",row.name||"その他",String(f),String(x));}
+  });
   p("備考",ci.note||"");p("メモ",ci.memo||"");
   return L.join("\n");
 }
@@ -563,7 +565,7 @@ const CLIENTS=[
   "商業登記","その他の業務","マザーホーム㈱",
   "佐賀共栄銀行","福岡信用金庫",
 ];
-function Export({ci,setCi,items,expList,extras,rate,g,onClose,saved,setSaved}){
+function Export({ci,setCi,items,rows,rate,g,onClose,saved,setSaved}){
   const u=p=>setCi({...ci,...p});const uc=(i,p)=>{const c=[...ci.customers];c[i]={...(c[i]||{}),...p};u({customers:c});};
   const ub=(i,p)=>{const b=[...ci.banks];b[i]={...(b[i]||{}),...p};u({banks:b});};
   const[showBM,setShowBM]=useState(false);
@@ -571,7 +573,7 @@ function Export({ci,setCi,items,expList,extras,rate,g,onClose,saved,setSaved}){
   if(!bankInit.current&&saved.length>0&&!(ci.banks[0]||{}).bankName){
     bankInit.current=true;const bk=saved[0];const nb=[...ci.banks];nb[0]={bankName:bk.bankName,branchName:bk.branchName,accountType:bk.accountType,accountNumber:bk.accountNumber};setCi({...ci,banks:nb});
   }
-  const tsv=genTSV(ci,items,expList,extras,rate,g);
+  const tsv=genTSV(ci,items,rows,rate,g);
   const doCopy=()=>navigator.clipboard.writeText(tsv).then(()=>alert("コピーしました！"));
   const doDL=()=>{const b=new Blob(["\uFEFF"+tsv],{type:"text/tab-separated-values;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`帳票_${ci.caseNumber||"案件"}.tsv`;a.click();};
   const sb=(bk,sl)=>ub(sl,{bankName:bk.bankName,branchName:bk.branchName,accountType:bk.accountType,accountNumber:bk.accountNumber});
@@ -805,6 +807,6 @@ export default function App(){
         <p className="text-xs text-center px-4" style={{color:"#a0aec0",gridColumn:"1 / -1"}}>※ 参考値。土地売買15/1000は令和8年3月31日まで。住宅用家屋証明は令和9年3月31日まで。</p>
       </main>
       {showCfg&&<Settings ft={ft} setFt={setFt} unit={unit} setUnit={setUnit} surcharges={surcharges} setSurcharges={setSurcharges} stdItems={stdItems} setStdItems={setStdItems} onClose={()=>setShowCfg(false)} />}
-      {showEx&&<Export ci={ci} setCi={setCi} items={items} expList={expList} extras={extras} rate={rate} g={g} onClose={()=>setShowEx(false)} saved={saved} setSaved={setSaved} />}
+      {showEx&&<Export ci={ci} setCi={setCi} items={items} rows={rows} rate={rate} g={g} onClose={()=>setShowEx(false)} saved={saved} setSaved={setSaved} />}
     </div>);
 }
