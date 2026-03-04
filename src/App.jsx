@@ -159,10 +159,10 @@ function genTSV(ci,items,expList,extras,rate,g){
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
   const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
   const extraFee=extras.reduce((s,e)=>s+(Number(e.fee)||0),0);
-  const addFee=scTotal+extraFee;
-  items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+addFee:c.fee;p("作業項目",LB[it.type]||it.type,String(f),String(c.tax));});
-  stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0&&si.fee>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(c*si.fee),"0");});
-  expList.forEach(e=>{if(e.src!=="std")p("作業項目",e.name,String(e.amount),"0");});
+  if(scTotal>0){const names=g.surcharges.filter(sc=>g.enabledSc[sc.id]).map(sc=>sc.name).join("・");p("作業項目",names,String(scTotal),"0");}
+  items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+extraFee:c.fee;p("作業項目",LB[it.type]||it.type,String(f),String(c.tax));});
+  stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0){const fee=c*si.fee;const jippi=c*si.jippi;if(fee>0||jippi>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(fee),String(jippi));}});
+  expList.forEach(e=>{if(e.src!=="std"&&e.src!=="extra")p("作業項目",e.name,String(e.amount),"0");});
   p("備考",ci.note||"");p("メモ",ci.memo||"");
   return L.join("\n");
 }
@@ -648,7 +648,7 @@ export default function App(){
 
   const expList=useMemo(()=>getExpList(counts,stdItems,postage,extras),[counts,stdItems,postage,extras]);
   const xfee=useMemo(()=>getXFee(counts,stdItems,extras),[counts,stdItems,extras]);
-  const cardAddFee=useMemo(()=>{const sc=surcharges.reduce((s,sc)=>s+(enabledSc[sc.id]?sc.amount:0),0);const ef=extras.reduce((s,e)=>s+(Number(e.fee)||0),0);return sc+ef;},[surcharges,enabledSc,extras]);
+  const cardAddFee=useMemo(()=>extras.reduce((s,e)=>s+(Number(e.fee)||0),0),[extras]);
   const tot=useMemo(()=>{
     let tf=0,tt=0;items.forEach(it=>{const c=calcItem(it,g);tf+=c.fee;tt+=c.tax;});
     const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
