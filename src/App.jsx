@@ -454,7 +454,7 @@ function Card({item,index,onUpdate,onRemove,g,scTotal=0}){
         <Sel label="登記種別" value={item.type} onChange={v=>u({type:v})} options={[
           {value:"transfer",label:"所有権移転"},{value:"preservation",label:"所有権保存"},
           {value:"mortgage",label:"抵当権設定"},{value:"rootMortgage",label:"根抵当権設定"},
-          {value:"deletion",label:"抹消"},{value:"addressChange",label:"住所・氏名変更"},
+          {value:"deletion",label:"（根）抵当権抹消"},{value:"addressChange",label:"所有権登記名義人住所変更"},
         ]} />
         <Inp label="不動産の個数" value={item.propCount} onChange={v=>u({propCount:v})} min={1} step={1} suffix="個" />
       </div>
