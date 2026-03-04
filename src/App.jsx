@@ -623,7 +623,7 @@ export default function App(){
   return(
     <div className="min-h-screen" style={{background:"linear-gradient(160deg,#f5f7fb,#e8ecf4)",fontFamily:"'Noto Sans JP',sans-serif"}}>
       <header className="sticky top-0 z-10 backdrop-blur-md" style={{background:"rgba(255,255,255,0.88)",borderBottom:"1px solid #e5e9f0"}}>
-        <div style={{maxWidth:1600}} className="mx-auto px-8 py-3 flex items-center justify-between">
+        <div style={{maxWidth:1360}} className="mx-auto px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background:"linear-gradient(135deg,#1e3a5f,#3d7ce0)"}}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/></svg>
@@ -637,43 +637,32 @@ export default function App(){
         </div>
       </header>
 
-      {/* ── 共通設定バナー（フルワイド） ── */}
-      <div style={{maxWidth:1600}} className="mx-auto px-8 pt-5">
-        <div className="rounded-xl overflow-hidden" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
-          <div className="flex items-center justify-between px-5 py-3 cursor-pointer select-none" onClick={()=>setCommonOpen(!commonOpen)}
-            style={{background:"linear-gradient(135deg,#eef2ff,#e8ecf4)"}}>
-            <h3 className="text-xs font-bold" style={{color:"#4338ca"}}>共通設定</h3>
-            <div className="flex items-center gap-2">
-              {!commonOpen&&<span className="text-xs" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</span>}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{transform:commonOpen?"rotate(180deg)":"",transition:"transform 0.2s",flexShrink:0}}>
-                <path d="M2 3.5l3 3 3-3" stroke="#4338ca" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      {/* ── メイン2カラム ── */}
+      <main style={{maxWidth:1360,display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,alignItems:"start"}} className="mx-auto px-8 py-5">
+        {/* ── 左カラム: 共通設定 + 取引項目 ── */}
+        <div style={{minWidth:0}}>
+          <div className="rounded-xl p-4 mb-4" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold" style={{color:"#4338ca"}}>共通設定</h3>
+              <button onClick={()=>setCommonOpen(!commonOpen)} className="text-xs px-2 py-0.5 rounded" style={{color:"#6366f1",background:"#eef2ff"}}>
+                {commonOpen?"折りたたむ":"展開"}</button>
             </div>
-          </div>
-          {commonOpen&&<div className="px-5 pb-4 pt-3">
-            <div className="text-xs mb-3 px-2 py-1.5 rounded-lg inline-block" style={{background:"#eef2ff",color:"#4338ca"}}>{autoLabel}</div>
-            <div className="flex items-start gap-8">
+            {commonOpen?<>
+              <div className="text-xs mb-3 px-2 py-1.5 rounded-lg" style={{background:"#eef2ff",color:"#4338ca"}}>{autoLabel}</div>
               <div className="flex flex-wrap gap-x-6">
                 {surcharges.map(s=>s.name&&(
                   <Chk key={s.id} label={`${s.name}（+${s.amount.toLocaleString()}円）`}
                     checked={!!enabledSc[s.id]} onChange={()=>toggleSc(s.id)} accent="#f59e0b" />
                 ))}
               </div>
-              <div style={{minWidth:360}}>
-                <Sel label="住宅用家屋証明書" value={housingCert} onChange={setHC} options={[
-                  {value:"none",label:"なし（原則税率）"},
-                  {value:"general",label:"一般住宅（移転3/1000・保存1.5/1000・設定1/1000）"},
-                  {value:"premium",label:"長期優良・低炭素（移転1/1000・保存1/1000・設定1/1000）"},
-                ]} />
-              </div>
-            </div>
-          </div>}
-        </div>
-      </div>
+              <Sel label="住宅用家屋証明書" value={housingCert} onChange={setHC} options={[
+                {value:"none",label:"なし（原則税率）"},
+                {value:"general",label:"一般住宅（移転3/1000・保存1.5/1000・設定1/1000）"},
+                {value:"premium",label:"長期優良・低炭素（移転1/1000・保存1/1000・設定1/1000）"},
+              ]} />
+            </>:<div className="text-xs" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</div>}
+          </div>
 
-      {/* ── メイン2カラム ── */}
-      <main style={{maxWidth:1600,display:"grid",gridTemplateColumns:"3fr 2fr",gap:24,alignItems:"start"}} className="mx-auto px-8 py-5">
-        {/* ── 左カラム: 取引項目 ── */}
-        <div style={{minWidth:0}}>
           {items.map((it,i)=><Card key={i} item={it} index={i} g={g} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
           <div className="flex gap-2 mb-4 flex-wrap">
             {[["transfer","＋移転"],["preservation","＋保存"],["mortgage","＋抵当権"],["rootMortgage","＋根抵当"],["deletion","＋抹消"],["addressChange","＋住変"]].map(([t,l])=>(
