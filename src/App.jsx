@@ -157,12 +157,12 @@ function genTSV(ci,items,expList,extras,rate,g){
   ["①","②","③"].forEach((s,i)=>{const c=ci.customers[i]||{};p(`顧客名${s}`,c.name||"",c.title||"");});
   {const b=ci.banks[0]||{};p("振込先①",b.bankName||"",b.branchName||"",b.accountType||"",b.accountNumber||"");}
   p("源泉対象",ci.withholding?"1":"0");p("消費税課税","1",`${rate.toFixed(2)}%`);
-  items.forEach(it=>{const c=calcItem(it,g);p("作業項目",LB[it.type]||it.type,String(c.fee),String(c.tax));});
   const scTotal=g.surcharges.reduce((s,sc)=>s+(g.enabledSc[sc.id]?sc.amount:0),0);
-  if(scTotal>0){const names=g.surcharges.filter(sc=>g.enabledSc[sc.id]).map(sc=>sc.name).join("・");p("作業項目",names,String(scTotal),"0");}
+  const extraFee=extras.reduce((s,e)=>s+(Number(e.fee)||0),0);
+  const addFee=scTotal+extraFee;
+  items.forEach((it,idx)=>{const c=calcItem(it,g);const f=idx===0?c.fee+addFee:c.fee;p("作業項目",LB[it.type]||it.type,String(f),String(c.tax));});
   stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0&&si.fee>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(c*si.fee),"0");});
-  expList.forEach(e=>{if(e.src!=="std"&&e.src!=="extra")p("作業項目",e.name,String(e.amount),"0");});
-  extras.forEach(e=>{const f=Number(e.fee)||0;const exp=Number(e.expense)||0;const total=f+exp;if(total>0)p("作業項目",e.name||"その他",String(total),"0");});
+  expList.forEach(e=>{if(e.src!=="std")p("作業項目",e.name,String(e.amount),"0");});
   p("備考",ci.note||"");p("メモ",ci.memo||"");
   return L.join("\n");
 }
