@@ -611,7 +611,7 @@ export default function App(){
   return(
     <div className="min-h-screen" style={{background:"linear-gradient(160deg,#f5f7fb,#e8ecf4)",fontFamily:"'Noto Sans JP',sans-serif"}}>
       <header className="sticky top-0 z-10 backdrop-blur-md" style={{background:"rgba(255,255,255,0.88)",borderBottom:"1px solid #e5e9f0"}}>
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div style={{maxWidth:1280}} className="mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background:"linear-gradient(135deg,#1e3a5f,#3d7ce0)"}}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/></svg>
@@ -624,114 +624,120 @@ export default function App(){
           </div>
         </div>
       </header>
-      <main className="max-w-xl mx-auto px-4 py-4 pb-48">
+      <main style={{maxWidth:1280,display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}} className="mx-auto px-6 py-5">
+        {/* ── 左カラム: 共通設定 + 取引項目 ── */}
+        <div style={{gridColumn:"1",minWidth:0}}>
+          <div className="rounded-xl p-4 mb-4" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
+            <h3 className="text-xs font-bold mb-2" style={{color:"#4338ca"}}>共通設定</h3>
+            <div className="text-xs mb-3 px-2 py-1.5 rounded-lg" style={{background:"#eef2ff",color:"#4338ca"}}>{autoLabel}</div>
+            <div className="flex flex-wrap gap-x-6">
+              {surcharges.map(s=>s.name&&(
+                <Chk key={s.id} label={`${s.name}（+${s.amount.toLocaleString()}円）`}
+                  checked={!!enabledSc[s.id]} onChange={()=>toggleSc(s.id)} accent="#f59e0b" />
+              ))}
+            </div>
+            <Sel label="住宅用家屋証明書" value={housingCert} onChange={setHC} options={[
+              {value:"none",label:"なし（原則税率）"},
+              {value:"general",label:"一般住宅（移転3/1000・保存1.5/1000・設定1/1000）"},
+              {value:"premium",label:"長期優良・低炭素（移転1/1000・保存1/1000・設定1/1000）"},
+            ]} />
+          </div>
 
-        <div className="rounded-xl p-4 mb-4" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
-          <h3 className="text-xs font-bold mb-2" style={{color:"#4338ca"}}>共通設定</h3>
-          <div className="text-xs mb-3 px-2 py-1.5 rounded-lg" style={{background:"#eef2ff",color:"#4338ca"}}>{autoLabel}</div>
-          <div className="grid grid-cols-2 gap-x-4">
-            {surcharges.map(s=>s.name&&(
-              <Chk key={s.id} label={`${s.name}（+${s.amount.toLocaleString()}円）`}
-                checked={!!enabledSc[s.id]} onChange={()=>toggleSc(s.id)} accent="#f59e0b" />
+          {items.map((it,i)=><Card key={i} item={it} index={i} g={g} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {[["transfer","＋移転"],["preservation","＋保存"],["mortgage","＋抵当権"],["rootMortgage","＋根抵当"],["deletion","＋抹消"],["addressChange","＋住変"]].map(([t,l])=>(
+              <button key={t} onClick={()=>setItems(p=>[...p,mk(t)])} className="py-2 px-3 rounded-xl text-xs font-medium hover:shadow-md"
+                style={{background:"#fff",border:"1.5px dashed #c5cdd8",color:"#5a6577"}}>{l}</button>
             ))}
           </div>
-          <Sel label="住宅用家屋証明書" value={housingCert} onChange={setHC} options={[
-            {value:"none",label:"なし（原則税率）"},
-            {value:"general",label:"一般住宅（移転3/1000・保存1.5/1000・設定1/1000）"},
-            {value:"premium",label:"長期優良・低炭素（移転1/1000・保存1/1000・設定1/1000）"},
-          ]} />
         </div>
 
-        {items.map((it,i)=><Card key={i} item={it} index={i} g={g} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {[["transfer","＋移転"],["preservation","＋保存"],["mortgage","＋抵当権"],["rootMortgage","＋根抵当"],["deletion","＋抹消"],["addressChange","＋住変"]].map(([t,l])=>(
-            <button key={t} onClick={()=>setItems(p=>[...p,mk(t)])} className="py-2 px-3 rounded-xl text-xs font-medium hover:shadow-md"
-              style={{background:"#fff",border:"1.5px dashed #c5cdd8",color:"#5a6577"}}>{l}</button>
-          ))}
-        </div>
-
-        <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0"}}>
-          <h3 className="text-xs font-bold mb-2" style={{color:"#566275"}}>謄本・情報 / 実費</h3>
-          {rows.map((row,idx)=>{
-            const arrows=(<div className="flex flex-col flex-shrink-0" style={{gap:0,marginRight:6}}>
-              <button onClick={()=>moveRow(idx,-1)} disabled={idx===0} className="text-xs leading-none px-0.5" style={{color:idx===0?"#d1d5db":"#4338ca",background:"none",border:"none",cursor:idx===0?"default":"pointer"}}>▲</button>
-              <button onClick={()=>moveRow(idx,1)} disabled={idx>=rows.length-1} className="text-xs leading-none px-0.5" style={{color:idx>=rows.length-1?"#d1d5db":"#4338ca",background:"none",border:"none",cursor:idx>=rows.length-1?"default":"pointer"}}>▼</button>
-            </div>);
-            if(row.kind==="std"){
-              const si=stdItems.find(s=>s.id===row.stdId);if(!si)return null;const c=row.count||0;
-              return(<div key={idx} className="py-2.5 flex items-center" style={{borderBottom:"1px solid #f0f3f8"}}>
-                {arrows}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-3" style={{flexWrap:"nowrap"}}>
-                    <span className="text-sm flex-1 min-w-0 truncate" style={{color:"#3a4557"}}>{si.name}</span>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button onClick={()=>updateRow(idx,{count:Math.max(0,c-1)})} className="w-7 h-7 rounded-lg flex items-center justify-center text-base" style={{background:"#f0f3f8",color:c>0?"#3a4557":"#c5cdd8",border:"1px solid #dce1ea"}}>−</button>
-                      <span className="text-sm font-medium w-6 text-center" style={{fontVariantNumeric:"tabular-nums"}}>{c}</span>
-                      <button onClick={()=>updateRow(idx,{count:c+1})} className="w-7 h-7 rounded-lg flex items-center justify-center text-base" style={{background:"#f0f3f8",color:"#3a4557",border:"1px solid #dce1ea"}}>+</button>
-                      <span className="text-xs w-4 flex-shrink-0" style={{color:"#8393a7"}}>{si.unitLabel}</span>
+        {/* ── 右カラム: 実費 + 消費税 + 合計 ── */}
+        <div style={{gridColumn:"2",minWidth:0}}>
+          <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0"}}>
+            <h3 className="text-xs font-bold mb-2" style={{color:"#566275"}}>謄本・情報 / 実費</h3>
+            {rows.map((row,idx)=>{
+              const arrows=(<div className="flex flex-col flex-shrink-0" style={{gap:0,marginRight:6}}>
+                <button onClick={()=>moveRow(idx,-1)} disabled={idx===0} className="text-xs leading-none px-0.5" style={{color:idx===0?"#d1d5db":"#4338ca",background:"none",border:"none",cursor:idx===0?"default":"pointer"}}>▲</button>
+                <button onClick={()=>moveRow(idx,1)} disabled={idx>=rows.length-1} className="text-xs leading-none px-0.5" style={{color:idx>=rows.length-1?"#d1d5db":"#4338ca",background:"none",border:"none",cursor:idx>=rows.length-1?"default":"pointer"}}>▼</button>
+              </div>);
+              if(row.kind==="std"){
+                const si=stdItems.find(s=>s.id===row.stdId);if(!si)return null;const c=row.count||0;
+                return(<div key={idx} className="py-2.5 flex items-center" style={{borderBottom:"1px solid #f0f3f8"}}>
+                  {arrows}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-3" style={{flexWrap:"nowrap"}}>
+                      <span className="text-sm flex-1 min-w-0 truncate" style={{color:"#3a4557"}}>{si.name}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button onClick={()=>updateRow(idx,{count:Math.max(0,c-1)})} className="w-7 h-7 rounded-lg flex items-center justify-center text-base" style={{background:"#f0f3f8",color:c>0?"#3a4557":"#c5cdd8",border:"1px solid #dce1ea"}}>−</button>
+                        <span className="text-sm font-medium w-6 text-center" style={{fontVariantNumeric:"tabular-nums"}}>{c}</span>
+                        <button onClick={()=>updateRow(idx,{count:c+1})} className="w-7 h-7 rounded-lg flex items-center justify-center text-base" style={{background:"#f0f3f8",color:"#3a4557",border:"1px solid #dce1ea"}}>+</button>
+                        <span className="text-xs w-4 flex-shrink-0" style={{color:"#8393a7"}}>{si.unitLabel}</span>
+                      </div>
+                    </div>
+                    {c>0&&<div className="text-xs mt-1" style={{color:"#8393a7"}}>報酬 @{si.fee.toLocaleString()}円 = {fmt(c*si.fee)}　／　実費 @{si.jippi.toLocaleString()}円 = {fmt(c*si.jippi)}</div>}
+                  </div>
+                </div>);
+              }
+              if(row.kind==="postage"){
+                return(<div key={idx} className="py-2.5 flex items-center" style={{borderBottom:"1px solid #f0f3f8"}}>
+                  {arrows}
+                  <div className="flex-1 flex items-center justify-between">
+                    <span className="text-sm" style={{color:"#3a4557"}}>郵送費</span>
+                    <div className="flex items-center gap-1">
+                      <input type="number" value={row.amount} min={0} step={100}
+                        onChange={e=>updateRow(idx,{amount:e.target.value===""?0:Number(e.target.value)})}
+                        className="w-24 px-2 py-1.5 rounded-lg text-sm text-right outline-none"
+                        style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",fontVariantNumeric:"tabular-nums"}}
+                        onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
+                      <span className="text-xs" style={{color:"#8393a7"}}>円</span>
                     </div>
                   </div>
-                  {c>0&&<div className="text-xs mt-1" style={{color:"#8393a7"}}>報酬 @{si.fee.toLocaleString()}円 = {fmt(c*si.fee)}　／　実費 @{si.jippi.toLocaleString()}円 = {fmt(c*si.jippi)}</div>}
-                </div>
-              </div>);
-            }
-            if(row.kind==="postage"){
-              return(<div key={idx} className="py-2.5 flex items-center" style={{borderBottom:"1px solid #f0f3f8"}}>
-                {arrows}
-                <div className="flex-1 flex items-center justify-between">
-                  <span className="text-sm" style={{color:"#3a4557"}}>郵送費</span>
-                  <div className="flex items-center gap-1">
-                    <input type="number" value={row.amount} min={0} step={100}
-                      onChange={e=>updateRow(idx,{amount:e.target.value===""?0:Number(e.target.value)})}
-                      className="w-24 px-2 py-1.5 rounded-lg text-sm text-right outline-none"
-                      style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",fontVariantNumeric:"tabular-nums"}}
-                      onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
-                    <span className="text-xs" style={{color:"#8393a7"}}>円</span>
-                  </div>
-                </div>
-              </div>);
-            }
-            if(row.kind==="extra"){
-              const f=Number(row.fee)||0,x=Number(row.expense)||0;
-              const sm=[];if(f>0)sm.push(`報酬 ${fmt(f)}`);if(x>0)sm.push(`立替 ${fmt(x)}`);
-              return(<ExtraItem key={idx} item={row} index={idx} total={rows.length}
-                onChange={v=>updateRow(idx,v)}
-                onRemove={()=>removeRow(idx)}
-                onMove={d=>moveRow(idx,d)} />);
-            }
-            return null;
-          })}
-          <div className="flex gap-2 mt-2">
-            <button onClick={()=>setRows(p=>[...p,{kind:"extra",name:"",fee:"",expense:""}])}
-              className="text-xs py-2 px-4 rounded-lg font-medium flex-1"
-              style={{color:"#3d7ce0",background:"#eef2ff",border:"1.5px dashed #c7d2fe"}}>＋ 自由入力</button>
-            {stdItems.length>0&&<select value="" onChange={e=>{if(e.target.value)addFromTemplate(e.target.value);}}
-              className="text-xs py-2 px-3 rounded-lg font-medium flex-1 cursor-pointer"
-              style={{color:"#4338ca",background:"#eef2ff",border:"1.5px dashed #c7d2fe",appearance:"none",
-                backgroundImage:`url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234338ca'/%3E%3C/svg%3E")`,
-                backgroundRepeat:"no-repeat",backgroundPosition:"right 10px center"}}>
-              <option value="">＋ テンプレートから追加</option>
-              {stdItems.map(si=><option key={si.id} value={si.id}>{si.name}（報酬{si.fee.toLocaleString()} / 実費{si.jippi.toLocaleString()}）</option>)}
-            </select>}
+                </div>);
+              }
+              if(row.kind==="extra"){
+                const f=Number(row.fee)||0,x=Number(row.expense)||0;
+                const sm=[];if(f>0)sm.push(`報酬 ${fmt(f)}`);if(x>0)sm.push(`立替 ${fmt(x)}`);
+                return(<ExtraItem key={idx} item={row} index={idx} total={rows.length}
+                  onChange={v=>updateRow(idx,v)}
+                  onRemove={()=>removeRow(idx)}
+                  onMove={d=>moveRow(idx,d)} />);
+              }
+              return null;
+            })}
+            <div className="flex gap-2 mt-2">
+              <button onClick={()=>setRows(p=>[...p,{kind:"extra",name:"",fee:"",expense:""}])}
+                className="text-xs py-2 px-4 rounded-lg font-medium flex-1"
+                style={{color:"#3d7ce0",background:"#eef2ff",border:"1.5px dashed #c7d2fe"}}>＋ 自由入力</button>
+              {stdItems.length>0&&<select value="" onChange={e=>{if(e.target.value)addFromTemplate(e.target.value);}}
+                className="text-xs py-2 px-3 rounded-lg font-medium flex-1 cursor-pointer"
+                style={{color:"#4338ca",background:"#eef2ff",border:"1.5px dashed #c7d2fe",appearance:"none",
+                  backgroundImage:`url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234338ca'/%3E%3C/svg%3E")`,
+                  backgroundRepeat:"no-repeat",backgroundPosition:"right 10px center"}}>
+                <option value="">＋ テンプレートから追加</option>
+                {stdItems.map(si=><option key={si.id} value={si.id}>{si.name}（報酬{si.fee.toLocaleString()} / 実費{si.jippi.toLocaleString()}）</option>)}
+              </select>}
+            </div>
+            {(xfee>0||expList.length>0)&&<div className="mt-3 pt-2 space-y-1" style={{borderTop:"1px dashed #dce1ea"}}>
+              {xfee>0&&<div className="flex justify-between text-xs"><span style={{color:"#4338ca"}}>報酬小計（税対象）</span><span className="font-bold" style={{color:"#4338ca"}}>{fmt(xfee)}</span></div>}
+              {expList.length>0&&<div className="flex justify-between text-xs"><span style={{color:"#92400e"}}>立替金合計</span><span className="font-bold" style={{color:"#92400e"}}>{fmt(expList.reduce((s,e)=>s+e.amount,0))}</span></div>}
+            </div>}
           </div>
-          {(xfee>0||expList.length>0)&&<div className="mt-3 pt-2 space-y-1" style={{borderTop:"1px dashed #dce1ea"}}>
-            {xfee>0&&<div className="flex justify-between text-xs"><span style={{color:"#4338ca"}}>報酬小計（税対象）</span><span className="font-bold" style={{color:"#4338ca"}}>{fmt(xfee)}</span></div>}
-            {expList.length>0&&<div className="flex justify-between text-xs"><span style={{color:"#92400e"}}>立替金合計</span><span className="font-bold" style={{color:"#92400e"}}>{fmt(expList.reduce((s,e)=>s+e.amount,0))}</span></div>}
-          </div>}
+
+          <div className="rounded-xl p-4 mb-4" style={{background:"#fff",border:"1px solid #e5e9f0"}}><Inp label="消費税率" value={rate} onChange={setRate} suffix="%" min={0} step={1} /></div>
+
+          <div className="rounded-xl p-5 mb-3" style={{background:"linear-gradient(135deg,#1e3a5f,#2558b3)",color:"#fff"}}>
+            <h3 className="text-xs mb-3" style={{color:"rgba(255,255,255,0.55)"}}>合計</h3>
+            {[["報酬（税抜）",fmt(tot.tf)],[`消費税（${rate}%）`,fmt(tot.ct)],["報酬（税込）",fmt(tot.tf+tot.ct)],["登録免許税",fmt(tot.tt)],...(tot.et>0?[["実費・立替金",fmt(tot.et)]]:[])]
+              .map(([l,v],i)=><div key={i} className="flex justify-between mb-1"><span className="text-sm" style={{color:"rgba(255,255,255,0.75)"}}>{l}</span><span className="text-sm font-medium" style={{fontVariantNumeric:"tabular-nums"}}>{v}</span></div>)}
+            <div className="pt-3 mt-2" style={{borderTop:"1px solid rgba(255,255,255,0.2)"}}>
+              <div className="flex justify-between items-baseline"><span className="font-bold">合計請求額</span><span className="text-2xl font-bold" style={{fontVariantNumeric:"tabular-nums"}}>{fmt(tot.g)}</span></div>
+            </div>
+          </div>
+          <button onClick={()=>setShowEx(true)} className="w-full py-3 rounded-xl text-sm font-bold text-white mb-4 hover:shadow-lg" style={{background:"linear-gradient(135deg,#059669,#047857)"}}>帳票システム用データを出力</button>
         </div>
 
-        <div className="rounded-xl p-4 mb-4" style={{background:"#fff",border:"1px solid #e5e9f0"}}><Inp label="消費税率" value={rate} onChange={setRate} suffix="%" min={0} step={1} /></div>
-
-        <div className="rounded-xl p-5 mb-3" style={{background:"linear-gradient(135deg,#1e3a5f,#2558b3)",color:"#fff"}}>
-          <h3 className="text-xs mb-3" style={{color:"rgba(255,255,255,0.55)"}}>合計</h3>
-          {[["報酬（税抜）",fmt(tot.tf)],[`消費税（${rate}%）`,fmt(tot.ct)],["報酬（税込）",fmt(tot.tf+tot.ct)],["登録免許税",fmt(tot.tt)],...(tot.et>0?[["実費・立替金",fmt(tot.et)]]:[])]
-            .map(([l,v],i)=><div key={i} className="flex justify-between mb-1"><span className="text-sm" style={{color:"rgba(255,255,255,0.75)"}}>{l}</span><span className="text-sm font-medium" style={{fontVariantNumeric:"tabular-nums"}}>{v}</span></div>)}
-          <div className="pt-3 mt-2" style={{borderTop:"1px solid rgba(255,255,255,0.2)"}}>
-            <div className="flex justify-between items-baseline"><span className="font-bold">合計請求額</span><span className="text-2xl font-bold" style={{fontVariantNumeric:"tabular-nums"}}>{fmt(tot.g)}</span></div>
-          </div>
-        </div>
-        <button onClick={()=>setShowEx(true)} className="w-full py-3 rounded-xl text-sm font-bold text-white mb-4 hover:shadow-lg" style={{background:"linear-gradient(135deg,#059669,#047857)"}}>帳票システム用データを出力</button>
-        <p className="text-xs text-center px-4" style={{color:"#a0aec0"}}>※ 参考値。土地売買15/1000は令和8年3月31日まで。住宅用家屋証明は令和9年3月31日まで。</p>
+        <p className="text-xs text-center px-4" style={{color:"#a0aec0",gridColumn:"1 / -1"}}>※ 参考値。土地売買15/1000は令和8年3月31日まで。住宅用家屋証明は令和9年3月31日まで。</p>
       </main>
       {showCfg&&<Settings ft={ft} setFt={setFt} unit={unit} setUnit={setUnit} surcharges={surcharges} setSurcharges={setSurcharges} stdItems={stdItems} setStdItems={setStdItems} onClose={()=>setShowCfg(false)} />}
       {showEx&&<Export ci={ci} setCi={setCi} items={items} expList={expList} extras={extras} rate={rate} g={g} onClose={()=>setShowEx(false)} saved={saved} setSaved={setSaved} />}
