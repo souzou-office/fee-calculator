@@ -160,7 +160,7 @@ function genTSV(ci,items,expList,extras,rate,g){
   items.forEach(it=>{const c=calcItem(it,g);p("作業項目",LB[it.type]||it.type,String(c.fee),String(c.tax));});
   stdItems.forEach(si=>{const c=counts[si.id]||0;if(c>0&&si.fee>0)p("作業項目",`${si.name} ${c}${si.unitLabel}`,String(c*si.fee),"0");});
   extras.forEach(e=>{const f=Number(e.fee)||0;if(f>0)p("作業項目",e.name||"その他",String(f),"0");});
-  expList.forEach(e=>{if(e.src!=="std")p("立替金",e.name,String(e.amount));});
+  expList.forEach(e=>{if(e.src!=="std")p("作業項目",e.name,String(e.amount),"0");});
   p("備考",ci.note||"");p("メモ",ci.memo||"");
   return L.join("\n");
 }
