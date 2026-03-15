@@ -44,8 +44,7 @@ const SELLER_INDIVIDUAL = [
 const SELLER_CORPORATE = [
   { id: "sc1", text: "登記識別情報通知", isRightsDoc: true, hasCount: true, defaultCount: "１通" },
   { id: "sc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
-  { id: "sc3", text: "所有権移転登記の委任状", hasCount: true, defaultCount: "１通", isCorpDoc: true },
-  { id: "sc4", text: "登記原因証明情報（所有権移転）", hasCount: true, defaultCount: "１通", isCorpDoc: true },
+  { id: "sc5", text: "代表者の写真付き身分証明書（マイナンバーカード、運転免許証など）", fixed: true },
 ];
 const BUYER_INDIVIDUAL = [
   { id: "bi1", text: "住民票（新住所移転後のもの）", hasCount: true, defaultCount: "１通" },
@@ -53,9 +52,8 @@ const BUYER_INDIVIDUAL = [
   { id: "bi4", text: "写真付き身分証明書（マイナンバーカード、運転免許証など）", hasCount: true, defaultCount: "１通", fixed: true },
 ];
 const BUYER_CORPORATE = [
-  { id: "bc1", text: "住民票（会社の登記事項証明書）", hasCount: true, defaultCount: "１通" },
   { id: "bc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
-  { id: "bc3", text: "委任状", hasCount: true, defaultCount: "１通", isCorpDoc: true },
+  { id: "bc4", text: "代表者の写真付き身分証明書（マイナンバーカード、運転免許証など）", fixed: true },
 ];
 const DEFAULT_MAIL_ITEMS = [
   '署名捺印済みの「住所変更登記の委任状」', '署名捺印済みの「抵当権抹消登記の委任状」',
@@ -167,6 +165,14 @@ export default function DocumentChecklist() {
   const customNotes = state.customNotes || [];
   const introText = cm ? INTRO.mail : INTRO.default;
   const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
+  const buildReceiptInfo = (d) => {
+    const r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
+    if (!r && !m && !dd && !num) return d?.receiptInfo || "";
+    let s = "";
+    if (r || m || dd) s = `令和${r || ""}年${m || ""}月${dd || ""}日`;
+    if (num) s += num;
+    return s;
+  };
   const itemDisplayText = (it, d) => {
     if (it.isRightsDoc) return (d?.rightsType || "識別情報") === "権利証" ? "登記済権利証（登記済証）" : "登記識別情報通知";
     if (it.isCorpDoc) return `${corpSealPrefix}「${it.text}」`;
@@ -294,36 +300,37 @@ export default function DocumentChecklist() {
         <button onClick={() => setScreen("edit")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275" }}>← 編集</button>
         <h2 className="text-sm font-bold" style={{ color: "#1a2233" }}>プレビュー</h2>
       </div>
-      <div id="doc-checklist-preview" className="rounded-sm p-8 mb-4" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid #e8e8e8", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 14, lineHeight: 1.8, color: "#222" }}>
+      <div id="doc-checklist-preview" className="rounded-sm p-8 mb-4" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid #e8e8e8", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 15, lineHeight: 1.8, color: "#222" }}>
         <div style={{ textAlign: "right", marginBottom: 20 }}>{dw}</div>
-        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 24 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
-        <div style={{ textAlign: "right", marginBottom: 24, fontSize: 12, lineHeight: 1.7, color: "#444" }}>
+        <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 24 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
+        <div style={{ textAlign: "right", marginBottom: 24, fontSize: 13, lineHeight: 1.7, color: "#444" }}>
           <div>{office.zip} {office.address}</div>
-          <div style={{ fontWeight: 600, fontSize: 14, color: "#222" }}>{office.name}</div>
+          <div style={{ fontWeight: 600, fontSize: 15, color: "#222" }}>{office.name}</div>
           <div>{office.rep}</div>
-          <div style={{ fontSize: 11 }}>TEL : {office.tel} / FAX : {office.fax}</div>
-          <div style={{ fontSize: 11 }}>✉{office.email}</div>
+          <div style={{ fontSize: 12 }}>TEL : {office.tel} / FAX : {office.fax}</div>
+          <div style={{ fontSize: 12 }}>{office.email}</div>
         </div>
-        <div style={{ textAlign: "center", fontSize: 17, fontWeight: 700, letterSpacing: "0.3em", margin: "16px 0 20px", paddingBottom: 10, borderBottom: "1px solid #ccc" }}>必 要 書 類 等 一 覧</div>
-        <div style={{ marginBottom: 18, textIndent: "1em", fontSize: 13 }}>{introText}</div>
+        <div style={{ textAlign: "center", fontSize: 18, fontWeight: 700, letterSpacing: "0.3em", margin: "16px 0 20px" }}>必 要 書 類 等 一 覧</div>
+        <div style={{ marginBottom: 18, textIndent: "1em", fontSize: 14 }}>{introText}</div>
         {preNote && <div style={{ marginBottom: 14, fontSize: 12, color: "#666" }}>＊ {preNote}</div>}
         <div style={{ marginBottom: 18 }}>
           {activeItems.map((item, idx) => {
             const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
             if (item.isAddressChange) return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><div className="flex-1"><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 12, color: "#555", marginTop: 2, lineHeight: 1.6 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 12, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
             if (item.isSeal) return <div key="_seal" className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span>{item.text}</span></div>;
-            return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span className="flex-1">{itemDisplayText(item, d)}{d.receiptInfo && <span style={{ fontSize: 12, color: "#666" }}>（{d.receiptInfo}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
+            const ri = buildReceiptInfo(d);
+            return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span className="flex-1">{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 12, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
           })}
         </div>
         {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 18, paddingTop: 10, borderTop: "1px dashed #ddd" }}>
-          {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}
-          {customNotes.map((n) => <div key={n.id} style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {n.text}</div>)}
+          {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 13, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}
+          {customNotes.map((n) => <div key={n.id} style={{ fontSize: 13, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {n.text}</div>)}
         </div>}
-        <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid #ccc", textAlign: "center" }}><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div><div>{meta.propertyDesc || "＿＿＿＿＿＿＿＿"}</div></div>
+        <div style={{ marginTop: 24, paddingTop: 14, textAlign: "center" }}><div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div><div style={{ fontSize: 15 }}>{meta.propertyDesc || "＿＿＿＿＿＿＿＿"}</div></div>
       </div>
       <div className="flex gap-2">
         <button onClick={() => setScreen("edit")} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#f0f3f8", color: "#566275" }}>← 編集に戻る</button>
-        <button onClick={() => { const el = document.getElementById("doc-checklist-preview"); if (!el) return; const w = window.open("", "_blank"); w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:14px;line-height:1.8}@media print{body{padding:20px}}</style></head><body>${el.innerHTML}</body></html>`); w.document.close(); setTimeout(() => w.print(), 500); }} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
+        <button onClick={() => { const el = document.getElementById("doc-checklist-preview"); if (!el) return; const w = window.open("", "_blank"); w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 10mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:15px;line-height:1.8}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`); w.document.close(); setTimeout(() => w.print(), 500); }} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
       </div>
     </div>
   );
@@ -398,7 +405,15 @@ export default function DocumentChecklist() {
             <div className="flex-1" style={{ opacity: en ? 1 : 0.4 }}>
               {item.isRightsDoc ? <select className="text-xs font-medium px-2 py-1 rounded-lg outline-none" style={{ border: "1px solid #ccc", background: "#fff" }} value={d.rightsType || "識別情報"} onChange={e => updDetail(item.id, "rightsType", e.target.value)}><option value="識別情報">登記識別情報通知</option><option value="権利証">登記済権利証（登記済証）</option></select>
                 : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
-              {item.isRightsDoc && en && <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.receiptInfo || ""} onChange={e => updDetail(item.id, "receiptInfo", e.target.value)} placeholder="例：令和７年１０月３１日第６９９７０号" />}
+              {item.isRightsDoc && en && <div className="mt-1">
+                <div className="flex items-center gap-0.5 flex-wrap">
+                  <span className="text-[10px]" style={{ color: "#566275" }}>令和</span>
+                  <Combo value={d.receiptR || 0} options={ro} onChange={v => updDetail(item.id, "receiptR", v)} w={44} suffix="年" />
+                  <Combo value={d.receiptM || 0} options={mo} onChange={v => updDetail(item.id, "receiptM", v)} w={38} suffix="月" />
+                  <Combo value={d.receiptD || 0} options={dayo} onChange={v => updDetail(item.id, "receiptD", v)} w={38} suffix="日" />
+                </div>
+                <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.receiptNum || ""} onChange={e => updDetail(item.id, "receiptNum", e.target.value)} placeholder="例：第６９９７０号" />
+              </div>}
               {item.isAddressChange && en && <div className="text-[10px] mt-1" style={{ color: "#8393a7" }}>※「登記住所」の内容が反映されます</div>}
               {item.isInkan && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#4338ca" }}>→ {en ? (ce === "corporate" ? "会社実印" : "ご実印") : (ce === "corporate" ? "会社印（認印可）" : "個人印（認印可）")} が自動挿入</div>}
               {item.isCorpDoc && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#8393a7" }}>※ 印鑑証明書の有無で「会社実印」/「会社印（認印可）」が自動切替</div>}
