@@ -115,7 +115,7 @@ export default function DocumentChecklist() {
   const now = new Date();
   const [dp, setDp] = useState({ r: cr, m: now.getMonth() + 1, d: now.getDate() });
   const dw = toWareki(dp.r + 2018, dp.m, dp.d);
-  const [meta, setMeta] = useState({ clientName: "", honorific: "様", propertyDesc: "", registryAddress: "" });
+  const [meta, setMeta] = useState({ clientName: "", honorific: "様", propertyDescs: [""], registryAddress: "" });
   const [office, setOffice] = useState({ ...DEFAULT_OFFICE });
   const [extraItems, setExtraItems] = useState([...DEFAULT_EXTRA]);
   const [mailItemsRaw, setMailItemsRaw] = useState([...DEFAULT_MAIL_ITEMS]);
@@ -166,10 +166,10 @@ export default function DocumentChecklist() {
   const introText = cm ? INTRO.mail : INTRO.default;
   const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
   const buildReceiptInfo = (d) => {
-    const r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
-    if (!r && !m && !dd && !num) return d?.receiptInfo || "";
+    const era = d?.receiptEra, r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
+    if (!era && !r && !m && !dd && !num) return d?.receiptInfo || "";
     let s = "";
-    if (r || m || dd) s = `令和${r || ""}年${m || ""}月${dd || ""}日`;
+    if (era || r || m || dd) s = `${era || ""}${r || ""}年${m || ""}月${dd || ""}日`;
     if (num) s += num;
     return s;
   };
@@ -198,7 +198,8 @@ export default function DocumentChecklist() {
     try {
       const p = await parsePDFWithClaude(b64); if (!p) { setPdfLoading(false); return; }
       if (p.date) setDp({ r: p.date.r || 0, m: p.date.m || 0, d: p.date.d || 0 });
-      setMeta(m => ({ ...m, clientName: p.clientName || "", honorific: p.honorific || "様", propertyDesc: p.propertyDesc || "", registryAddress: p.registryAddress || "" }));
+      const pDescs = p.propertyDesc ? (Array.isArray(p.propertyDesc) ? p.propertyDesc : [p.propertyDesc]) : [""];
+      setMeta(m => ({ ...m, clientName: p.clientName || "", honorific: p.honorific || "様", propertyDescs: pDescs.length ? pDescs : [""], registryAddress: p.registryAddress || "" }));
       const role = p.role || "seller", ent = p.entity || "individual", mail = !!p.isMail;
       setTab(role); setEntity(e => ({ ...e, [role]: ent })); setIsMail(m => ({ ...m, [role]: mail }));
       const key = `${role}_${ent}_${mail}`, base = filterItems(getBase(role, ent), mail, mailItems).map(it => ({ ...it }));
@@ -326,7 +327,7 @@ export default function DocumentChecklist() {
           {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 13, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}
           {customNotes.map((n) => <div key={n.id} style={{ fontSize: 13, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {n.text}</div>)}
         </div>}
-        <div style={{ marginTop: 24, paddingTop: 14, textAlign: "center" }}><div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div><div style={{ fontSize: 15 }}>{meta.propertyDesc || "＿＿＿＿＿＿＿＿"}</div></div>
+        <div style={{ marginTop: 24, paddingTop: 14, textAlign: "center" }}><div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div>{meta.propertyDescs.filter(s => s).length > 0 ? meta.propertyDescs.filter(s => s).map((pd, i) => <div key={i} style={{ fontSize: 15 }}>{pd}</div>) : <div style={{ fontSize: 15 }}>＿＿＿＿＿＿＿＿</div>}</div>
       </div>
       <div className="flex gap-2">
         <button onClick={() => setScreen("edit")} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#f0f3f8", color: "#566275" }}>← 編集に戻る</button>
@@ -384,10 +385,12 @@ export default function DocumentChecklist() {
           <input className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#f0f3f8", border: "1.5px solid #dce1ea" }} value={meta.clientName} onChange={e => setMeta(p => ({ ...p, clientName: e.target.value }))} placeholder="氏名・会社名" />
           <select className="px-2 py-2 rounded-lg text-sm outline-none" style={{ background: "#f0f3f8", border: "1.5px solid #dce1ea" }} value={meta.honorific} onChange={e => setMeta(p => ({ ...p, honorific: e.target.value }))}><option value="様">様</option><option value="御中">御中</option></select>
         </div>
-        <div className="flex items-center gap-2 mb-2">
-          <label className="text-xs font-medium w-16 shrink-0" style={{ color: "#566275" }}>物件</label>
-          <input className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#f0f3f8", border: "1.5px solid #dce1ea" }} value={meta.propertyDesc} onChange={e => setMeta(p => ({ ...p, propertyDesc: e.target.value }))} placeholder="不動産の表示" />
-        </div>
+        {meta.propertyDescs.map((pd, i) => <div key={i} className="flex items-center gap-2 mb-2">
+          <label className="text-xs font-medium w-16 shrink-0" style={{ color: "#566275" }}>{i === 0 ? "物件" : ""}</label>
+          <input className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#f0f3f8", border: "1.5px solid #dce1ea" }} value={pd} onChange={e => { const a = [...meta.propertyDescs]; a[i] = e.target.value; setMeta(p => ({ ...p, propertyDescs: a })); }} placeholder="不動産の表示" />
+          {i > 0 && <button className="text-sm shrink-0" style={{ color: "#aaa" }} onClick={() => setMeta(p => ({ ...p, propertyDescs: p.propertyDescs.filter((_, j) => j !== i) }))}>✕</button>}
+          {i === meta.propertyDescs.length - 1 && <button className="text-sm font-bold shrink-0 px-1.5 py-0.5 rounded" style={{ color: "#4338ca", background: "#eef2ff" }} onClick={() => setMeta(p => ({ ...p, propertyDescs: [...p.propertyDescs, ""] }))}>＋</button>}
+        </div>)}
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium w-16 shrink-0" style={{ color: "#566275" }}>登記住所</label>
           <input className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#f0f3f8", border: "1.5px solid #dce1ea" }} value={meta.registryAddress} onChange={e => setMeta(p => ({ ...p, registryAddress: e.target.value }))} placeholder="住所変更がある場合" />
@@ -407,7 +410,9 @@ export default function DocumentChecklist() {
                 : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
               {item.isRightsDoc && en && <div className="mt-1">
                 <div className="flex items-center gap-0.5 flex-wrap">
-                  <span className="text-[10px]" style={{ color: "#566275" }}>令和</span>
+                  <select className="text-[11px] px-1 py-0.5 rounded outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8", color: "#566275" }} value={d.receiptEra || "令和"} onChange={e => updDetail(item.id, "receiptEra", e.target.value)}>
+                    <option value="令和">令和</option><option value="平成">平成</option><option value="昭和">昭和</option>
+                  </select>
                   <Combo value={d.receiptR || 0} options={ro} onChange={v => updDetail(item.id, "receiptR", v)} w={44} suffix="年" />
                   <Combo value={d.receiptM || 0} options={mo} onChange={v => updDetail(item.id, "receiptM", v)} w={38} suffix="月" />
                   <Combo value={d.receiptD || 0} options={dayo} onChange={v => updDetail(item.id, "receiptD", v)} w={38} suffix="日" />
