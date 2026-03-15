@@ -317,10 +317,10 @@ export default function DocumentChecklist() {
         <div style={{ marginBottom: 18 }}>
           {activeItems.map((item, idx) => {
             const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
-            if (item.isAddressChange) return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><div className="flex-1"><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 12, color: "#555", marginTop: 2, lineHeight: 1.6 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 12, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
-            if (item.isSeal) return <div key="_seal" className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span>{item.text}</span></div>;
+            if (item.isAddressChange) return <div key={item.id} style={{ display: "flex", marginBottom: 6, fontSize: 14 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 28 }}>{num}．</span><div style={{ flex: 1 }}><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 12, color: "#555", marginTop: 2, lineHeight: 1.6 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 12, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
+            if (item.isSeal) return <div key="_seal" style={{ display: "flex", marginBottom: 6, fontSize: 14 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 28 }}>{num}．</span><span>{item.text}</span></div>;
             const ri = buildReceiptInfo(d);
-            return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span className="flex-1">{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 12, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
+            return <div key={item.id} style={{ display: "flex", marginBottom: 6, fontSize: 14 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 28 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 12, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
           })}
         </div>
         {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 18, paddingTop: 10, borderTop: "1px dashed #ddd" }}>
