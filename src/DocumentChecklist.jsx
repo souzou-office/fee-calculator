@@ -166,10 +166,10 @@ export default function DocumentChecklist() {
   const introText = cm ? INTRO.mail : INTRO.default;
   const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
   const buildReceiptInfo = (d) => {
-    const r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
-    if (!r && !m && !dd && !num) return d?.receiptInfo || "";
+    const era = d?.receiptEra, r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
+    if (!era && !r && !m && !dd && !num) return d?.receiptInfo || "";
     let s = "";
-    if (r || m || dd) s = `令和${r || ""}年${m || ""}月${dd || ""}日`;
+    if (era || r || m || dd) s = `${era || ""}${r || ""}年${m || ""}月${dd || ""}日`;
     if (num) s += num;
     return s;
   };
@@ -407,7 +407,9 @@ export default function DocumentChecklist() {
                 : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
               {item.isRightsDoc && en && <div className="mt-1">
                 <div className="flex items-center gap-0.5 flex-wrap">
-                  <span className="text-[10px]" style={{ color: "#566275" }}>令和</span>
+                  <select className="text-[11px] px-1 py-0.5 rounded outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8", color: "#566275" }} value={d.receiptEra || "令和"} onChange={e => updDetail(item.id, "receiptEra", e.target.value)}>
+                    <option value="令和">令和</option><option value="平成">平成</option><option value="昭和">昭和</option>
+                  </select>
                   <Combo value={d.receiptR || 0} options={ro} onChange={v => updDetail(item.id, "receiptR", v)} w={44} suffix="年" />
                   <Combo value={d.receiptM || 0} options={mo} onChange={v => updDetail(item.id, "receiptM", v)} w={38} suffix="月" />
                   <Combo value={d.receiptD || 0} options={dayo} onChange={v => updDetail(item.id, "receiptD", v)} w={38} suffix="日" />
