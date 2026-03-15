@@ -96,8 +96,16 @@ function calcTaxDetail(type,it,hc){
       {l:"税額",v:`${base.toLocaleString()} × ${r*1000}/1000 = ${taxRaw.toLocaleString()} → ${tax.toLocaleString()}（百円未満切捨）`},
     ]};
   }
-  if(type==="mortgage"||type==="rootMortgage"){
+  if(type==="mortgage"){
     let r=4/1000;if(hc==="general"||hc==="premium")r=1/1000;
+    const raw=it.debtAmount||0,base=f1(raw),taxRaw=base*r,tax=f2(taxRaw);
+    return{total:tax,steps:[
+      {l:"課税標準",v:`${raw.toLocaleString()} → ${base.toLocaleString()}（千円未満切捨）`},
+      {l:"税額",v:`${base.toLocaleString()} × ${r*1000}/1000 = ${taxRaw.toLocaleString()} → ${tax.toLocaleString()}（百円未満切捨）`},
+    ]};
+  }
+  if(type==="rootMortgage"){
+    const r=4/1000;
     const raw=it.debtAmount||0,base=f1(raw),taxRaw=base*r,tax=f2(taxRaw);
     return{total:tax,steps:[
       {l:"課税標準",v:`${raw.toLocaleString()} → ${base.toLocaleString()}（千円未満切捨）`},
