@@ -220,13 +220,15 @@ export default function DocumentChecklist() {
 
   const ro = Array.from({ length: cr + 2 }, (_, i) => i + 1), mo = Array.from({ length: 12 }, (_, i) => i + 1), dayo = Array.from({ length: 31 }, (_, i) => i + 1);
 
-  // ========== SETTINGS ==========
+  // ========== SETTINGS (統合) ==========
   if (screen === "settings") return (
     <div>
       <div className="flex items-center gap-3 mb-4">
         <button onClick={() => setScreen("edit")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275" }}>← 戻る</button>
         <h2 className="text-sm font-bold" style={{ color: "#1a2233" }}>設定</h2>
       </div>
+
+      {/* 事務所情報 */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
         <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>事務所情報</h3>
         {[["zip","郵便番号"],["address","住所"],["name","事務所名"],["rep","代表者"],["tel","TEL"],["fax","FAX"],["email","メール"]].map(([k,l]) => (
@@ -237,6 +239,8 @@ export default function DocumentChecklist() {
         ))}
         <button onClick={() => setOffice({ ...DEFAULT_OFFICE })} className="text-xs px-3 py-1 rounded-lg mt-1" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
+
+      {/* 郵送時の追加書類 */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
         <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>郵送時の追加書類</h3>
         {mailItems.map((n, i) => (
@@ -253,21 +257,10 @@ export default function DocumentChecklist() {
         </div>
         <button onClick={() => setMailItems(() => [...DEFAULT_MAIL_ITEMS])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
-      <div className="flex gap-2">
-        <button onClick={exportSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#eef2ff", color: "#4338ca", border: "1px solid #c7d2fe" }}>📤 設定エクスポート</button>
-        <button onClick={importSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#f0fdf4", color: "#059669", border: "1px solid #bbf7d0" }}>📥 設定インポート</button>
-      </div>
-    </div>
-  );
 
-  // ========== EXTRA ITEMS EDIT ==========
-  if (screen === "extraEdit") return (
-    <div>
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => setScreen("edit")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275" }}>← 戻る</button>
-        <h2 className="text-sm font-bold" style={{ color: "#1a2233" }}>よく使う項目の編集</h2>
-      </div>
+      {/* よく使う項目 */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+        <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>よく使う項目</h3>
         {extraItems.map((n, i) => (
           <div key={i} className="flex items-center gap-2 py-1.5" style={{ borderBottom: "1px solid #f0f3f8" }}>
             <span className="flex-1 text-xs">{n}</span>
@@ -281,6 +274,15 @@ export default function DocumentChecklist() {
             onClick={() => { if (newInput.trim()) { setExtraItems(p => [...p, newInput.trim()]); setNewInput(""); } }}>追加</button>
         </div>
         <button onClick={() => setExtraItems([...DEFAULT_EXTRA])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
+      </div>
+
+      {/* インポート・エクスポート */}
+      <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+        <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>データ管理</h3>
+        <div className="flex gap-2">
+          <button onClick={exportSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#eef2ff", color: "#4338ca", border: "1px solid #c7d2fe" }}>設定エクスポート</button>
+          <button onClick={importSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#f0fdf4", color: "#059669", border: "1px solid #bbf7d0" }}>設定インポート</button>
+        </div>
       </div>
     </div>
   );
@@ -329,10 +331,13 @@ export default function DocumentChecklist() {
   // ========== EDIT ==========
   return (
     <div>
-      {/* PDF Import */}
-      <button onClick={handlePDF} disabled={pdfLoading} className="w-full py-2.5 rounded-xl text-xs font-medium mb-3" style={{ border: "1.5px dashed #c7d2fe", background: "#fff", color: "#4338ca" }}>
-        {pdfLoading ? "⏳ 読み取り中…" : "📄 PDFから取込"}
-      </button>
+      {/* Header with settings */}
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={handlePDF} disabled={pdfLoading} className="px-4 py-2 rounded-xl text-xs font-medium" style={{ border: "1.5px dashed #c7d2fe", background: "#fff", color: "#4338ca" }}>
+          {pdfLoading ? "⏳ 読み取り中…" : "📄 PDFから取込"}
+        </button>
+        <button onClick={() => setScreen("settings")} className="px-3 py-2 rounded-xl text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275", border: "1.5px solid #e5e9f0" }}>⚙ 設定</button>
+      </div>
 
       {/* Tabs: 売主/買主 */}
       <div className="flex mb-3 rounded-xl overflow-hidden" style={{ border: "1.5px solid #e5e9f0" }}>
@@ -384,10 +389,7 @@ export default function DocumentChecklist() {
 
       {/* Items */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{activeItems.length}件</span></h3>
-          <button onClick={() => setScreen("settings")} className="text-xs px-2 py-0.5 rounded" style={{ color: "#6366f1", background: "#eef2ff" }}>⚙ 設定</button>
-        </div>
+        <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{activeItems.length}件</span></h3>
         {allItems.map((item, idx) => {
           const d = state.details[item.id] || {}, en = state.enabled[item.id], fx = item.fixed;
           return <div key={item.id} className="flex items-start gap-2 py-2 rounded-lg mb-1 px-2" style={{ background: "#f8f9fc", borderLeft: `3px solid ${en ? (fx ? "#8393a7" : "#4338ca") : "#dce1ea"}` }}>
@@ -412,9 +414,8 @@ export default function DocumentChecklist() {
             onKeyDown={e => { if (e.key === "Enter") addItem(customInput); }} />
           <button className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#4338ca", color: "#fff" }} onClick={() => addItem(customInput)}>追加</button>
         </div>
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2">
           <button className="text-xs" style={{ color: "#8393a7" }} onClick={() => setShowExtra(!showExtra)}>{showExtra ? "▲ 閉じる" : "▼ よく使う項目"}</button>
-          <button className="text-[10px] px-2 py-0.5 rounded" style={{ border: "1px solid #dce1ea", color: "#8393a7" }} onClick={() => setScreen("extraEdit")}>編集</button>
         </div>
         {showExtra && <div className="flex flex-wrap gap-1.5 mt-2">{extraItems.map((n, i) => <button key={`${n}_${i}`} className="px-2 py-1 rounded text-[11px]" style={{ border: "1px solid #dce1ea", background: "#f8f9fc", color: "#566275" }} onClick={() => addItem(n)}>+ {n}</button>)}</div>}
       </div>
