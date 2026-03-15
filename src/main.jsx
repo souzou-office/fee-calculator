@@ -44,7 +44,7 @@ function Root() {
           background: "linear-gradient(160deg,#f5f7fb,#e8ecf4)",
           fontFamily: "'Noto Sans JP',sans-serif",
         }}>
-          <div style={{ maxWidth: 720, margin: "0 auto", padding: "20px 16px 40px" }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 16px 40px" }}>
             <DocumentChecklist />
           </div>
         </div>
