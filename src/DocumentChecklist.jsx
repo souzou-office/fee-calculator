@@ -44,8 +44,6 @@ const SELLER_INDIVIDUAL = [
 const SELLER_CORPORATE = [
   { id: "sc1", text: "登記識別情報通知", isRightsDoc: true, hasCount: true, defaultCount: "１通" },
   { id: "sc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
-  { id: "sc3", text: "所有権移転登記の委任状", hasCount: true, defaultCount: "１通", isCorpDoc: true },
-  { id: "sc4", text: "登記原因証明情報（所有権移転）", hasCount: true, defaultCount: "１通", isCorpDoc: true },
 ];
 const BUYER_INDIVIDUAL = [
   { id: "bi1", text: "住民票（新住所移転後のもの）", hasCount: true, defaultCount: "１通" },
@@ -53,9 +51,7 @@ const BUYER_INDIVIDUAL = [
   { id: "bi4", text: "写真付き身分証明書（マイナンバーカード、運転免許証など）", hasCount: true, defaultCount: "１通", fixed: true },
 ];
 const BUYER_CORPORATE = [
-  { id: "bc1", text: "住民票（会社の登記事項証明書）", hasCount: true, defaultCount: "１通" },
   { id: "bc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
-  { id: "bc3", text: "委任状", hasCount: true, defaultCount: "１通", isCorpDoc: true },
 ];
 const DEFAULT_MAIL_ITEMS = [
   '署名捺印済みの「住所変更登記の委任状」', '署名捺印済みの「抵当権抹消登記の委任状」',
