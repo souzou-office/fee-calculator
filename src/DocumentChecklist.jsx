@@ -44,6 +44,7 @@ const SELLER_INDIVIDUAL = [
 const SELLER_CORPORATE = [
   { id: "sc1", text: "登記識別情報通知", isRightsDoc: true, hasCount: true, defaultCount: "１通" },
   { id: "sc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
+  { id: "sc5", text: "代表者の写真付き身分証明書（マイナンバーカード、運転免許証など）", fixed: true },
 ];
 const BUYER_INDIVIDUAL = [
   { id: "bi1", text: "住民票（新住所移転後のもの）", hasCount: true, defaultCount: "１通" },
@@ -52,6 +53,7 @@ const BUYER_INDIVIDUAL = [
 ];
 const BUYER_CORPORATE = [
   { id: "bc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
+  { id: "bc4", text: "代表者の写真付き身分証明書（マイナンバーカード、運転免許証など）", fixed: true },
 ];
 const DEFAULT_MAIL_ITEMS = [
   '署名捺印済みの「住所変更登記の委任状」', '署名捺印済みの「抵当権抹消登記の委任状」',
@@ -163,6 +165,14 @@ export default function DocumentChecklist() {
   const customNotes = state.customNotes || [];
   const introText = cm ? INTRO.mail : INTRO.default;
   const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
+  const buildReceiptInfo = (d) => {
+    const r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
+    if (!r && !m && !dd && !num) return d?.receiptInfo || "";
+    let s = "";
+    if (r || m || dd) s = `令和${r || ""}年${m || ""}月${dd || ""}日`;
+    if (num) s += num;
+    return s;
+  };
   const itemDisplayText = (it, d) => {
     if (it.isRightsDoc) return (d?.rightsType || "識別情報") === "権利証" ? "登記済権利証（登記済証）" : "登記識別情報通知";
     if (it.isCorpDoc) return `${corpSealPrefix}「${it.text}」`;
@@ -308,7 +318,8 @@ export default function DocumentChecklist() {
             const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
             if (item.isAddressChange) return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><div className="flex-1"><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 12, color: "#555", marginTop: 2, lineHeight: 1.6 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 12, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
             if (item.isSeal) return <div key="_seal" className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span>{item.text}</span></div>;
-            return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span className="flex-1">{itemDisplayText(item, d)}{d.receiptInfo && <span style={{ fontSize: 12, color: "#666" }}>（{d.receiptInfo}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
+            const ri = buildReceiptInfo(d);
+            return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span className="flex-1">{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 12, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
           })}
         </div>
         {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 18, paddingTop: 10, borderTop: "1px dashed #ddd" }}>
@@ -394,7 +405,15 @@ export default function DocumentChecklist() {
             <div className="flex-1" style={{ opacity: en ? 1 : 0.4 }}>
               {item.isRightsDoc ? <select className="text-xs font-medium px-2 py-1 rounded-lg outline-none" style={{ border: "1px solid #ccc", background: "#fff" }} value={d.rightsType || "識別情報"} onChange={e => updDetail(item.id, "rightsType", e.target.value)}><option value="識別情報">登記識別情報通知</option><option value="権利証">登記済権利証（登記済証）</option></select>
                 : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
-              {item.isRightsDoc && en && <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.receiptInfo || ""} onChange={e => updDetail(item.id, "receiptInfo", e.target.value)} placeholder="例：令和７年１０月３１日第６９９７０号" />}
+              {item.isRightsDoc && en && <div className="mt-1">
+                <div className="flex items-center gap-0.5 flex-wrap">
+                  <span className="text-[10px]" style={{ color: "#566275" }}>令和</span>
+                  <Combo value={d.receiptR || 0} options={ro} onChange={v => updDetail(item.id, "receiptR", v)} w={44} suffix="年" />
+                  <Combo value={d.receiptM || 0} options={mo} onChange={v => updDetail(item.id, "receiptM", v)} w={38} suffix="月" />
+                  <Combo value={d.receiptD || 0} options={dayo} onChange={v => updDetail(item.id, "receiptD", v)} w={38} suffix="日" />
+                </div>
+                <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.receiptNum || ""} onChange={e => updDetail(item.id, "receiptNum", e.target.value)} placeholder="例：第６９９７０号" />
+              </div>}
               {item.isAddressChange && en && <div className="text-[10px] mt-1" style={{ color: "#8393a7" }}>※「登記住所」の内容が反映されます</div>}
               {item.isInkan && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#4338ca" }}>→ {en ? (ce === "corporate" ? "会社実印" : "ご実印") : (ce === "corporate" ? "会社印（認印可）" : "個人印（認印可）")} が自動挿入</div>}
               {item.isCorpDoc && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#8393a7" }}>※ 印鑑証明書の有無で「会社実印」/「会社印（認印可）」が自動切替</div>}
