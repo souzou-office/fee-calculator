@@ -174,7 +174,7 @@ export default function DocumentChecklist() {
     return s;
   };
   const itemDisplayText = (it, d) => {
-    if (it.isRightsDoc) return (d?.rightsType || "識別情報") === "権利証" ? "登記済権利証（登記済証）" : "登記識別情報通知";
+    if (it.isRightsDoc) return (d?.rightsType || "識別情報") === "権利証" ? "登記済権利証" : "登記識別情報通知";
     if (it.isCorpDoc) return `${corpSealPrefix}「${it.text}」`;
     return it.text;
   };
@@ -406,7 +406,7 @@ export default function DocumentChecklist() {
             {fx ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "#e5e9f0", color: "#8393a7" }}>固定</span>
               : <div onClick={() => toggleItem(item.id)} className="w-5 h-5 rounded flex items-center justify-center cursor-pointer shrink-0 text-[11px] font-bold" style={{ background: en ? "#4338ca" : "#fff", border: `2px solid ${en ? "#4338ca" : "#ccc"}`, color: "#fff" }}>{en && "✓"}</div>}
             <div className="flex-1" style={{ opacity: en ? 1 : 0.4 }}>
-              {item.isRightsDoc ? <select className="text-xs font-medium px-2 py-1 rounded-lg outline-none" style={{ border: "1px solid #ccc", background: "#fff" }} value={d.rightsType || "識別情報"} onChange={e => updDetail(item.id, "rightsType", e.target.value)}><option value="識別情報">登記識別情報通知</option><option value="権利証">登記済権利証（登記済証）</option></select>
+              {item.isRightsDoc ? <select className="text-xs font-medium px-2 py-1 rounded-lg outline-none" style={{ border: "1px solid #ccc", background: "#fff" }} value={d.rightsType || "識別情報"} onChange={e => updDetail(item.id, "rightsType", e.target.value)}><option value="識別情報">登記識別情報通知</option><option value="権利証">登記済権利証</option></select>
                 : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
               {item.isRightsDoc && en && <div className="mt-1">
                 <div className="flex items-center gap-0.5 flex-wrap">
