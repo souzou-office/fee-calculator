@@ -43,8 +43,9 @@ const SELLER_INDIVIDUAL = [
 ];
 const SELLER_CORPORATE = [
   { id: "sc1", text: "登記識別情報通知", isRightsDoc: true, hasCount: true, defaultCount: "１通" },
-  { id: "sc2", text: '会社ご実印で捺印済みの「所有権移転登記の委任状」', hasCount: true, defaultCount: "１通" },
-  { id: "sc3", text: '会社ご実印で捺印済みの「登記原因証明情報（所有権移転）」', hasCount: true, defaultCount: "１通" },
+  { id: "sc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
+  { id: "sc3", text: "所有権移転登記の委任状", hasCount: true, defaultCount: "１通", isCorpDoc: true },
+  { id: "sc4", text: "登記原因証明情報（所有権移転）", hasCount: true, defaultCount: "１通", isCorpDoc: true },
 ];
 const BUYER_INDIVIDUAL = [
   { id: "bi1", text: "住民票（新住所移転後のもの）", hasCount: true, defaultCount: "１通" },
@@ -53,7 +54,8 @@ const BUYER_INDIVIDUAL = [
 ];
 const BUYER_CORPORATE = [
   { id: "bc1", text: "住民票（会社の登記事項証明書）", hasCount: true, defaultCount: "１通" },
-  { id: "bc2", text: '会社ご実印で捺印済みの「委任状」', hasCount: true, defaultCount: "１通" },
+  { id: "bc2", text: "印鑑証明書（３カ月以内のもの）", hasCount: true, defaultCount: "１通", isInkan: true },
+  { id: "bc3", text: "委任状", hasCount: true, defaultCount: "１通", isCorpDoc: true },
 ];
 const DEFAULT_MAIL_ITEMS = [
   '署名捺印済みの「住所変更登記の委任状」', '署名捺印済みの「抵当権抹消登記の委任状」',
@@ -70,7 +72,7 @@ const DEFAULT_EXTRA = [
   '署名捺印済みの「抵当権抹消登記の書類受領の委任状」', '署名捺印済みの「所有権移転登記の委任状」',
   '署名捺印済みの「登記原因証明情報」', "記入済みの犯収法第４条に基づくチェックシート",
   "印鑑証明書（３カ月以内のもの）", "住民票", "戸籍の附票", "写真付身分証明書のコピー",
-  '会社ご実印で捺印済みの「委任状」', "上申書", "不在籍不在住証明書", "固定資産評価証明書",
+  "委任状", "上申書", "不在籍不在住証明書", "固定資産評価証明書",
 ];
 const FW = ["１","２","３","４","５","６","７","８","９","１０","１１","１２","１３","１４","１５"];
 
@@ -135,7 +137,7 @@ export default function DocumentChecklist() {
     const enabled = {}, details = {};
     items.forEach(it => { enabled[it.id] = true; details[it.id] = { count: it.defaultCount || "", receiptInfo: "", rightsType: "識別情報" }; });
     const nts = getNotes(tab, ce, cm), ne = {}; nts.forEach((_, i) => { ne[i] = true; });
-    const st = { items, enabled, details, noteEnabled: ne, customItems: [] };
+    const st = { items, enabled, details, noteEnabled: ne, customItems: [], customNotes: [] };
     setConfigStates(p => ({ ...p, [ck]: st })); return st;
   };
   const state = getState();
@@ -147,9 +149,13 @@ export default function DocumentChecklist() {
   const toggleNote = i => upd(s => ({ ...s, noteEnabled: { ...s.noteEnabled, [i]: !s.noteEnabled[i] } }));
   const addItem = text => { if (!text.trim()) return; const id = `c_${Date.now()}`; upd(s => ({ ...s, customItems: [...(s.customItems || []), { id, text: text.trim(), hasCount: true, defaultCount: "１通", isCustom: true }], enabled: { ...s.enabled, [id]: true }, details: { ...s.details, [id]: { count: "１通", receiptInfo: "" } } })); setCustomInput(""); };
   const removeItem = id => upd(s => ({ ...s, customItems: (s.customItems || []).filter(i => i.id !== id), enabled: (() => { const e = { ...s.enabled }; delete e[id]; return e; })(), details: (() => { const d = { ...s.details }; delete d[id]; return d; })() }));
+  const [noteInput, setNoteInput] = useState("");
+  const addNote = text => { if (!text.trim()) return; upd(s => ({ ...s, customNotes: [...(s.customNotes || []), { id: `cn_${Date.now()}`, text: text.trim() }] })); setNoteInput(""); };
+  const removeNote = id => upd(s => ({ ...s, customNotes: (s.customNotes || []).filter(n => n.id !== id) }));
 
   const hasInkan = allItems.some(it => it.isInkan && state.enabled[it.id]);
-  const sealText = useMemo(() => ce === "corporate" ? (hasInkan ? "会社ご実印" : "法人印（認印可）") : (hasInkan ? "ご実印" : "個人印（認印可）"), [ce, hasInkan]);
+  const sealText = useMemo(() => ce === "corporate" ? (hasInkan ? "会社実印" : "会社印（認印可）") : (hasInkan ? "ご実印" : "個人印（認印可）"), [ce, hasInkan]);
+  const corpSealPrefix = useMemo(() => hasInkan ? "会社実印で捺印済みの" : "会社印（認印可）で捺印済みの", [hasInkan]);
 
   const buildActive = () => {
     const list = allItems.filter(it => state.enabled[it.id]);
@@ -158,9 +164,14 @@ export default function DocumentChecklist() {
   };
   const activeItems = buildActive();
   const activeNotes = notesTmpl.filter((_, i) => state.noteEnabled[i]);
+  const customNotes = state.customNotes || [];
   const introText = cm ? INTRO.mail : INTRO.default;
   const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
-  const rightsText = (it, d) => it.isRightsDoc ? ((d?.rightsType || "識別情報") === "権利証" ? "登記済権利証（登記済証）" : "登記識別情報通知") : it.text;
+  const itemDisplayText = (it, d) => {
+    if (it.isRightsDoc) return (d?.rightsType || "識別情報") === "権利証" ? "登記済権利証（登記済証）" : "登記識別情報通知";
+    if (it.isCorpDoc) return `${corpSealPrefix}「${it.text}」`;
+    return it.text;
+  };
 
   const buildNote = n => {
     if (n.template === "pre_check") {
@@ -209,13 +220,15 @@ export default function DocumentChecklist() {
 
   const ro = Array.from({ length: cr + 2 }, (_, i) => i + 1), mo = Array.from({ length: 12 }, (_, i) => i + 1), dayo = Array.from({ length: 31 }, (_, i) => i + 1);
 
-  // ========== SETTINGS ==========
+  // ========== SETTINGS (統合) ==========
   if (screen === "settings") return (
     <div>
       <div className="flex items-center gap-3 mb-4">
         <button onClick={() => setScreen("edit")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275" }}>← 戻る</button>
         <h2 className="text-sm font-bold" style={{ color: "#1a2233" }}>設定</h2>
       </div>
+
+      {/* 事務所情報 */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
         <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>事務所情報</h3>
         {[["zip","郵便番号"],["address","住所"],["name","事務所名"],["rep","代表者"],["tel","TEL"],["fax","FAX"],["email","メール"]].map(([k,l]) => (
@@ -226,6 +239,8 @@ export default function DocumentChecklist() {
         ))}
         <button onClick={() => setOffice({ ...DEFAULT_OFFICE })} className="text-xs px-3 py-1 rounded-lg mt-1" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
+
+      {/* 郵送時の追加書類 */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
         <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>郵送時の追加書類</h3>
         {mailItems.map((n, i) => (
@@ -242,21 +257,10 @@ export default function DocumentChecklist() {
         </div>
         <button onClick={() => setMailItems(() => [...DEFAULT_MAIL_ITEMS])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
-      <div className="flex gap-2">
-        <button onClick={exportSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#eef2ff", color: "#4338ca", border: "1px solid #c7d2fe" }}>📤 設定エクスポート</button>
-        <button onClick={importSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#f0fdf4", color: "#059669", border: "1px solid #bbf7d0" }}>📥 設定インポート</button>
-      </div>
-    </div>
-  );
 
-  // ========== EXTRA ITEMS EDIT ==========
-  if (screen === "extraEdit") return (
-    <div>
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => setScreen("edit")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275" }}>← 戻る</button>
-        <h2 className="text-sm font-bold" style={{ color: "#1a2233" }}>よく使う項目の編集</h2>
-      </div>
+      {/* よく使う項目 */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+        <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>よく使う項目</h3>
         {extraItems.map((n, i) => (
           <div key={i} className="flex items-center gap-2 py-1.5" style={{ borderBottom: "1px solid #f0f3f8" }}>
             <span className="flex-1 text-xs">{n}</span>
@@ -271,6 +275,15 @@ export default function DocumentChecklist() {
         </div>
         <button onClick={() => setExtraItems([...DEFAULT_EXTRA])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
+
+      {/* インポート・エクスポート */}
+      <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+        <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>データ管理</h3>
+        <div className="flex gap-2">
+          <button onClick={exportSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#eef2ff", color: "#4338ca", border: "1px solid #c7d2fe" }}>設定エクスポート</button>
+          <button onClick={importSettings} className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium" style={{ background: "#f0fdf4", color: "#059669", border: "1px solid #bbf7d0" }}>設定インポート</button>
+        </div>
+      </div>
     </div>
   );
 
@@ -281,7 +294,7 @@ export default function DocumentChecklist() {
         <button onClick={() => setScreen("edit")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275" }}>← 編集</button>
         <h2 className="text-sm font-bold" style={{ color: "#1a2233" }}>プレビュー</h2>
       </div>
-      <div className="rounded-sm p-8 mb-4" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid #e8e8e8", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 14, lineHeight: 1.8, color: "#222" }}>
+      <div id="doc-checklist-preview" className="rounded-sm p-8 mb-4" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid #e8e8e8", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 14, lineHeight: 1.8, color: "#222" }}>
         <div style={{ textAlign: "right", marginBottom: 20 }}>{dw}</div>
         <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 24 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
         <div style={{ textAlign: "right", marginBottom: 24, fontSize: 12, lineHeight: 1.7, color: "#444" }}>
@@ -299,23 +312,32 @@ export default function DocumentChecklist() {
             const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
             if (item.isAddressChange) return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><div className="flex-1"><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 12, color: "#555", marginTop: 2, lineHeight: 1.6 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 12, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
             if (item.isSeal) return <div key="_seal" className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span>{item.text}</span></div>;
-            return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span className="flex-1">{rightsText(item, d)}{d.receiptInfo && <span style={{ fontSize: 12, color: "#666" }}>（{d.receiptInfo}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
+            return <div key={item.id} className="flex mb-1.5" style={{ fontSize: 14 }}><span className="font-medium shrink-0" style={{ minWidth: 28 }}>{num}．</span><span className="flex-1">{itemDisplayText(item, d)}{d.receiptInfo && <span style={{ fontSize: 12, color: "#666" }}>（{d.receiptInfo}）</span>}</span>{d.count && <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>{d.count}</span>}</div>;
           })}
         </div>
-        {activeNotes.length > 0 && <div style={{ marginTop: 18, paddingTop: 10, borderTop: "1px dashed #ddd" }}>{activeNotes.map((n, i) => <div key={i} style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}</div>}
+        {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 18, paddingTop: 10, borderTop: "1px dashed #ddd" }}>
+          {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}
+          {customNotes.map((n) => <div key={n.id} style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {n.text}</div>)}
+        </div>}
         <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid #ccc", textAlign: "center" }}><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div><div>{meta.propertyDesc || "＿＿＿＿＿＿＿＿"}</div></div>
       </div>
-      <p className="text-xs text-center" style={{ color: "#8393a7" }}>この内容でよければ「Word出力して」とお伝えください。</p>
+      <div className="flex gap-2">
+        <button onClick={() => setScreen("edit")} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#f0f3f8", color: "#566275" }}>← 編集に戻る</button>
+        <button onClick={() => { const el = document.getElementById("doc-checklist-preview"); if (!el) return; const w = window.open("", "_blank"); w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:14px;line-height:1.8}@media print{body{padding:20px}}</style></head><body>${el.innerHTML}</body></html>`); w.document.close(); setTimeout(() => w.print(), 500); }} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
+      </div>
     </div>
   );
 
   // ========== EDIT ==========
   return (
     <div>
-      {/* PDF Import */}
-      <button onClick={handlePDF} disabled={pdfLoading} className="w-full py-2.5 rounded-xl text-xs font-medium mb-3" style={{ border: "1.5px dashed #c7d2fe", background: "#fff", color: "#4338ca" }}>
-        {pdfLoading ? "⏳ 読み取り中…" : "📄 PDFから取込"}
-      </button>
+      {/* Header with settings */}
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={handlePDF} disabled={pdfLoading} className="px-4 py-2 rounded-xl text-xs font-medium" style={{ border: "1.5px dashed #c7d2fe", background: "#fff", color: "#4338ca" }}>
+          {pdfLoading ? "⏳ 読み取り中…" : "📄 PDFから取込"}
+        </button>
+        <button onClick={() => setScreen("settings")} className="px-3 py-2 rounded-xl text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275", border: "1.5px solid #e5e9f0" }}>⚙ 設定</button>
+      </div>
 
       {/* Tabs: 売主/買主 */}
       <div className="flex mb-3 rounded-xl overflow-hidden" style={{ border: "1.5px solid #e5e9f0" }}>
@@ -367,10 +389,7 @@ export default function DocumentChecklist() {
 
       {/* Items */}
       <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{activeItems.length}件</span></h3>
-          <button onClick={() => setScreen("settings")} className="text-xs px-2 py-0.5 rounded" style={{ color: "#6366f1", background: "#eef2ff" }}>⚙ 設定</button>
-        </div>
+        <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{activeItems.length}件</span></h3>
         {allItems.map((item, idx) => {
           const d = state.details[item.id] || {}, en = state.enabled[item.id], fx = item.fixed;
           return <div key={item.id} className="flex items-start gap-2 py-2 rounded-lg mb-1 px-2" style={{ background: "#f8f9fc", borderLeft: `3px solid ${en ? (fx ? "#8393a7" : "#4338ca") : "#dce1ea"}` }}>
@@ -381,7 +400,8 @@ export default function DocumentChecklist() {
                 : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
               {item.isRightsDoc && en && <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.receiptInfo || ""} onChange={e => updDetail(item.id, "receiptInfo", e.target.value)} placeholder="例：令和７年１０月３１日第６９９７０号" />}
               {item.isAddressChange && en && <div className="text-[10px] mt-1" style={{ color: "#8393a7" }}>※「登記住所」の内容が反映されます</div>}
-              {item.isInkan && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#4338ca" }}>→ {en ? (ce === "corporate" ? "会社ご実印" : "ご実印") : (ce === "corporate" ? "法人印（認印可）" : "個人印（認印可）")} が自動挿入</div>}
+              {item.isInkan && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#4338ca" }}>→ {en ? (ce === "corporate" ? "会社実印" : "ご実印") : (ce === "corporate" ? "会社印（認印可）" : "個人印（認印可）")} が自動挿入</div>}
+              {item.isCorpDoc && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#8393a7" }}>※ 印鑑証明書の有無で「会社実印」/「会社印（認印可）」が自動切替</div>}
             </div>
             {item.hasCount && en && <select className="text-xs px-1 py-1 rounded outline-none shrink-0" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.count || ""} onChange={e => updDetail(item.id, "count", e.target.value)}>{COUNT_OPTIONS.map(o => <option key={o} value={o}>{o || "−"}</option>)}</select>}
             {item.isCustom && <button className="text-base leading-none" style={{ color: "#ccc" }} onClick={() => removeItem(item.id)}>×</button>}
@@ -394,21 +414,30 @@ export default function DocumentChecklist() {
             onKeyDown={e => { if (e.key === "Enter") addItem(customInput); }} />
           <button className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#4338ca", color: "#fff" }} onClick={() => addItem(customInput)}>追加</button>
         </div>
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2">
           <button className="text-xs" style={{ color: "#8393a7" }} onClick={() => setShowExtra(!showExtra)}>{showExtra ? "▲ 閉じる" : "▼ よく使う項目"}</button>
-          <button className="text-[10px] px-2 py-0.5 rounded" style={{ border: "1px solid #dce1ea", color: "#8393a7" }} onClick={() => setScreen("extraEdit")}>編集</button>
         </div>
         {showExtra && <div className="flex flex-wrap gap-1.5 mt-2">{extraItems.map((n, i) => <button key={`${n}_${i}`} className="px-2 py-1 rounded text-[11px]" style={{ border: "1px solid #dce1ea", background: "#f8f9fc", color: "#566275" }} onClick={() => addItem(n)}>+ {n}</button>)}</div>}
       </div>
 
       {/* Notes */}
-      {notesTmpl.length > 0 && <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+      <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
         <h3 className="text-xs font-bold mb-2" style={{ color: "#4338ca" }}>注記</h3>
         {notesTmpl.map((n, i) => <div key={i} className="flex items-start gap-2 mb-1.5" style={{ opacity: state.noteEnabled[i] ? 1 : 0.35 }}>
           <div onClick={() => toggleNote(i)} className="w-4 h-4 rounded flex items-center justify-center cursor-pointer shrink-0 text-[9px] font-bold mt-0.5" style={{ background: state.noteEnabled[i] ? "#4338ca" : "#fff", border: `2px solid ${state.noteEnabled[i] ? "#4338ca" : "#ccc"}`, color: "#fff" }}>{state.noteEnabled[i] && "✓"}</div>
           <span className="text-[11px]" style={{ color: "#566275", lineHeight: 1.5 }}>{buildNote(n)}</span>
         </div>)}
-      </div>}
+        {customNotes.map((n) => <div key={n.id} className="flex items-start gap-2 mb-1.5">
+          <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[9px] font-bold mt-0.5" style={{ background: "#4338ca", border: "2px solid #4338ca", color: "#fff" }}>✓</div>
+          <span className="flex-1 text-[11px]" style={{ color: "#566275", lineHeight: 1.5 }}>{n.text}</span>
+          <button className="text-base leading-none shrink-0" style={{ color: "#ccc" }} onClick={() => removeNote(n.id)}>×</button>
+        </div>)}
+        <div className="flex gap-2 mt-2">
+          <input className="flex-1 px-3 py-1.5 rounded-lg text-xs outline-none" style={{ background: "#f0f3f8", border: "1.5px solid #dce1ea" }} value={noteInput} onChange={e => setNoteInput(e.target.value)} placeholder="注記を追加..."
+            onKeyDown={e => { if (e.key === "Enter") addNote(noteInput); }} />
+          <button className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#4338ca", color: "#fff" }} onClick={() => addNote(noteInput)}>追加</button>
+        </div>
+      </div>
 
       <button onClick={() => setScreen("preview")} className="w-full py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#1e3a5f", color: "#fff" }}>プレビュー →</button>
     </div>
