@@ -294,18 +294,18 @@ export default function DocumentChecklist() {
         <button onClick={() => setScreen("edit")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275" }}>← 編集</button>
         <h2 className="text-sm font-bold" style={{ color: "#1a2233" }}>プレビュー</h2>
       </div>
-      <div id="doc-checklist-preview" className="rounded-sm p-8 mb-4" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid #e8e8e8", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 14, lineHeight: 1.8, color: "#222" }}>
+      <div id="doc-checklist-preview" className="rounded-sm p-8 mb-4" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid #e8e8e8", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 15, lineHeight: 1.8, color: "#222" }}>
         <div style={{ textAlign: "right", marginBottom: 20 }}>{dw}</div>
-        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 24 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
-        <div style={{ textAlign: "right", marginBottom: 24, fontSize: 12, lineHeight: 1.7, color: "#444" }}>
+        <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 24 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
+        <div style={{ textAlign: "right", marginBottom: 24, fontSize: 13, lineHeight: 1.7, color: "#444" }}>
           <div>{office.zip} {office.address}</div>
-          <div style={{ fontWeight: 600, fontSize: 14, color: "#222" }}>{office.name}</div>
+          <div style={{ fontWeight: 600, fontSize: 15, color: "#222" }}>{office.name}</div>
           <div>{office.rep}</div>
-          <div style={{ fontSize: 11 }}>TEL : {office.tel} / FAX : {office.fax}</div>
-          <div style={{ fontSize: 11 }}>✉{office.email}</div>
+          <div style={{ fontSize: 12 }}>TEL : {office.tel} / FAX : {office.fax}</div>
+          <div style={{ fontSize: 12 }}>{office.email}</div>
         </div>
-        <div style={{ textAlign: "center", fontSize: 17, fontWeight: 700, letterSpacing: "0.3em", margin: "16px 0 20px", paddingBottom: 10, borderBottom: "1px solid #ccc" }}>必 要 書 類 等 一 覧</div>
-        <div style={{ marginBottom: 18, textIndent: "1em", fontSize: 13 }}>{introText}</div>
+        <div style={{ textAlign: "center", fontSize: 18, fontWeight: 700, letterSpacing: "0.3em", margin: "16px 0 20px" }}>必 要 書 類 等 一 覧</div>
+        <div style={{ marginBottom: 18, textIndent: "1em", fontSize: 14 }}>{introText}</div>
         {preNote && <div style={{ marginBottom: 14, fontSize: 12, color: "#666" }}>＊ {preNote}</div>}
         <div style={{ marginBottom: 18 }}>
           {activeItems.map((item, idx) => {
@@ -316,14 +316,14 @@ export default function DocumentChecklist() {
           })}
         </div>
         {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 18, paddingTop: 10, borderTop: "1px dashed #ddd" }}>
-          {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}
-          {customNotes.map((n) => <div key={n.id} style={{ fontSize: 12, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {n.text}</div>)}
+          {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 13, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}
+          {customNotes.map((n) => <div key={n.id} style={{ fontSize: 13, color: "#555", marginBottom: 6, lineHeight: 1.6 }}>＊ {n.text}</div>)}
         </div>}
-        <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid #ccc", textAlign: "center" }}><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div><div>{meta.propertyDesc || "＿＿＿＿＿＿＿＿"}</div></div>
+        <div style={{ marginTop: 24, paddingTop: 14, textAlign: "center" }}><div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div><div style={{ fontSize: 15 }}>{meta.propertyDesc || "＿＿＿＿＿＿＿＿"}</div></div>
       </div>
       <div className="flex gap-2">
         <button onClick={() => setScreen("edit")} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#f0f3f8", color: "#566275" }}>← 編集に戻る</button>
-        <button onClick={() => { const el = document.getElementById("doc-checklist-preview"); if (!el) return; const w = window.open("", "_blank"); w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:14px;line-height:1.8}@media print{body{padding:20px}}</style></head><body>${el.innerHTML}</body></html>`); w.document.close(); setTimeout(() => w.print(), 500); }} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
+        <button onClick={() => { const el = document.getElementById("doc-checklist-preview"); if (!el) return; const w = window.open("", "_blank"); w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 10mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:15px;line-height:1.8}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`); w.document.close(); setTimeout(() => w.print(), 500); }} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
       </div>
     </div>
   );
