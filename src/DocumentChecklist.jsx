@@ -1,13 +1,6 @@
 // src/DocumentChecklist.jsx
 // 必要書類一覧作成ツール — fee-calculator統合版
 import { useState, useRef, useMemo } from "react";
-let _pdfjsLib = null;
-async function getPdfjs() {
-  if (_pdfjsLib) return _pdfjsLib;
-  _pdfjsLib = await import("pdfjs-dist");
-  _pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${_pdfjsLib.version}/pdf.worker.min.mjs`;
-  return _pdfjsLib;
-}
 
 // ========== IMPORT / EXPORT HELPERS ==========
 function downloadJSON(data, filename) {
@@ -20,120 +13,6 @@ function uploadJSON() {
     input.onchange = e => { const f = e.target.files?.[0]; if (!f) return res(null); const r = new FileReader(); r.onload = () => { try { res(JSON.parse(r.result)); } catch { res(null); } }; r.readAsText(f); };
     input.click();
   });
-}
-function pickPDFFile() {
-  return new Promise(res => {
-    const input = document.createElement("input"); input.type = "file"; input.accept = ".pdf";
-    input.onchange = e => { const f = e.target.files?.[0]; if (!f) return res(null); res(f); };
-    input.click();
-  });
-}
-
-async function extractPDFText(file) {
-  const pdfjsLib = await getPdfjs();
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-  const lines = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const tc = await page.getTextContent();
-    // グループ化: 近接Y座標（閾値3pt以内）のテキストを1行にまとめる
-    const items = tc.items.filter(it => it.str && it.str.trim());
-    if (!items.length) continue;
-    items.sort((a, b) => b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4]);
-    const rows = [];
-    let curRow = [items[0]], curY = items[0].transform[5];
-    for (let j = 1; j < items.length; j++) {
-      const y = items[j].transform[5];
-      if (Math.abs(y - curY) <= 3) { curRow.push(items[j]); }
-      else { rows.push(curRow); curRow = [items[j]]; curY = y; }
-    }
-    rows.push(curRow);
-    for (const row of rows) {
-      row.sort((a, b) => a.transform[4] - b.transform[4]);
-      const text = row.map(it => it.str).join("").trim();
-      if (text) lines.push(text);
-    }
-  }
-  return lines;
-}
-
-// 全角数字→半角
-const z2h = s => s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
-// 全角カウント
-const COUNT_RE = /[０-９0-9]+\s*通/;
-// 番号付き項目: 全角・半角数字 ＋ ．or.
-const ITEM_RE = /^[０-９１２３４５６７８９0-9]+[．.]\s*(.+)$/;
-
-function parsePDFLines(lines) {
-  const result = { date: {}, clientName: "", honorific: "様", propertyDescs: [], registryAddress: "", role: "seller", entity: "individual", isMail: false, items: [] };
-  // 全文（全角数字を半角に変換したバージョンも用意）
-  const full = lines.join("\n");
-  const fullH = z2h(full);
-
-  // 日付: 令和○年○月○日（全角・半角両対応）
-  const dm = fullH.match(/令\s*和\s*(\d+)\s*年\s*(\d+)\s*月\s*(\d+)\s*日/);
-  if (dm) result.date = { r: Number(dm[1]), m: Number(dm[2]), d: Number(dm[3]) };
-
-  // 郵送判定
-  if (full.includes("レターパック") || full.includes("郵送")) result.isMail = true;
-
-  // 宛名: 「様」「御中」で終わる行を探す
-  for (const line of lines) {
-    const t = line.trim();
-    const nm = t.match(/^(.+?)\s*(様|御中)\s*$/);
-    if (nm && !t.includes("必要") && !t.includes("書類") && !t.includes("身分証") && !t.includes("印鑑") && nm[1].length < 30) {
-      result.clientName = nm[1].trim();
-      result.honorific = nm[2];
-      break;
-    }
-  }
-
-  // 売主/買主判定
-  const hasRights = full.includes("識別情報") || full.includes("権利証");
-  const hasJuminhyo = /住民票/.test(full) && !full.includes("附票");
-  if (hasJuminhyo && !hasRights) result.role = "buyer";
-  else result.role = "seller";
-
-  // 法人判定
-  if (full.includes("代表者") && (full.includes("登記事項証明書") || full.includes("履歴事項"))) result.entity = "corporate";
-
-  // 番号付き項目抽出
-  for (const line of lines) {
-    const m = line.trim().match(ITEM_RE);
-    if (m) {
-      let text = m[1].trim();
-      let count = "";
-      const cm = text.match(COUNT_RE);
-      if (cm) { count = cm[0].replace(/\s/g, ""); text = text.replace(COUNT_RE, "").trim(); }
-      let receiptInfo = "";
-      const rm = text.match(/[（(]([^）)]*受付[^）)]*)[）)]/);
-      if (rm) receiptInfo = rm[1];
-      let rightsType = "";
-      if (text.includes("識別情報")) rightsType = "識別情報";
-      else if (text.includes("権利証") || text.includes("登記済")) rightsType = "権利証";
-      result.items.push({ text, count, receiptInfo, rightsType });
-    }
-  }
-
-  // 登記簿上の住所
-  for (const line of lines) {
-    const am = line.match(/登記簿上の住所[「『]([^」』]+)[」』]/);
-    if (am) { result.registryAddress = am[1]; break; }
-  }
-
-  // 不動産の表示
-  let inProp = false;
-  for (const line of lines) {
-    if (line.includes("不動産の表示")) { inProp = true; continue; }
-    if (inProp) {
-      const t = line.trim();
-      if (!t || /^[＿_]+$/.test(t) || t.startsWith("TEL") || t.startsWith("FAX") || t.includes("司法書士") || t.includes("〒")) break;
-      result.propertyDescs.push(t);
-    }
-  }
-
-  return result;
 }
 
 // ========== DATA ==========
@@ -230,7 +109,7 @@ export default function DocumentChecklist() {
   const [newInput, setNewInput] = useState("");
   const [showExtra, setShowExtra] = useState(false);
   const [customInput, setCustomInput] = useState("");
-  const [pdfLoading, setPdfLoading] = useState(false);
+
   const dragRef = useRef({ from: null, to: null });
 
   const ce = entity[tab], cm = isMail[tab], ck = `${tab}_${ce}_${cm}`;
@@ -333,39 +212,6 @@ export default function DocumentChecklist() {
   const exportSettings = () => downloadJSON({ office, extraItems, mailItems, version: 2 }, "必要書類一覧_設定.json");
   const importSettings = async () => { const d = await uploadJSON(); if (!d) return; if (d.office) setOffice(d.office); if (d.extraItems) setExtraItems(d.extraItems); if (d.mailItems) setMailItems(() => d.mailItems); };
 
-  const handlePDF = async () => {
-    const file = await pickPDFFile(); if (!file) return;
-    setPdfLoading(true);
-    try {
-      const lines = await extractPDFText(file);
-      const p = parsePDFLines(lines); if (!p) { setPdfLoading(false); return; }
-      if (p.date) setDp({ r: p.date.r || 0, m: p.date.m || 0, d: p.date.d || 0 });
-      const pDescs = p.propertyDescs && p.propertyDescs.length ? p.propertyDescs : [""];
-      setMeta(m => ({ ...m, clientName: p.clientName || "", honorific: p.honorific || "様", propertyDescs: pDescs.length ? pDescs : [""], registryAddress: p.registryAddress || "" }));
-      const role = p.role || "seller", ent = p.entity || "individual", mail = !!p.isMail;
-      setTab(role); setEntity(e => ({ ...e, [role]: ent })); setIsMail(m => ({ ...m, [role]: mail }));
-      const key = `${role}_${ent}_${mail}`, base = filterItems(getBase(role, ent), mail, mailItems).map(it => ({ ...it }));
-      const en = {}, dt = {};
-      base.forEach(it => { en[it.id] = false; dt[it.id] = { count: "", receiptInfo: "", rightsType: "識別情報" }; });
-      const unmatched = [];
-      (p.items || []).forEach(pi => {
-        const txt = pi.text || ""; let matched = false;
-        for (const bi of base) {
-          if (bi.isRightsDoc && (txt.includes("識別情報") || txt.includes("権利証") || txt.includes("登記済"))) { en[bi.id] = true; dt[bi.id] = { count: pi.count || bi.defaultCount || "", receiptInfo: pi.receiptInfo || "", rightsType: txt.includes("権利証") ? "権利証" : "識別情報" }; matched = true; break; }
-          if (bi.isAddressChange && (txt.includes("附票") || txt.includes("住所変更"))) { en[bi.id] = true; matched = true; break; }
-          if (bi.isInkan && txt.includes("印鑑証明")) { en[bi.id] = true; dt[bi.id] = { ...dt[bi.id], count: pi.count || bi.defaultCount || "" }; matched = true; break; }
-          if (!bi.isRightsDoc && !bi.isAddressChange && !bi.isInkan && bi.text && txt.includes(bi.text.substring(0, 6))) { en[bi.id] = true; dt[bi.id] = { ...dt[bi.id], count: pi.count || bi.defaultCount || "" }; matched = true; break; }
-        }
-        base.forEach(bi => { if (bi.fixed) en[bi.id] = true; });
-        if (!matched && txt && !txt.includes("実印") && !txt.includes("認印")) unmatched.push(pi);
-      });
-      const ci = unmatched.map((pi, i) => ({ id: `imp_${Date.now()}_${i}`, text: pi.text, hasCount: true, defaultCount: pi.count || "１通", isCustom: true }));
-      ci.forEach(c => { en[c.id] = true; dt[c.id] = { count: c.defaultCount, receiptInfo: "" }; });
-      const ne = {}; getNotes(role, ent, mail).forEach((_, i) => { ne[i] = true; });
-      setConfigStates(prev => ({ ...prev, [key]: { items: base, enabled: en, details: dt, noteEnabled: ne, customItems: ci } }));
-    } catch (e) { console.error(e); }
-    setPdfLoading(false);
-  };
 
   const ro = Array.from({ length: cr + 2 }, (_, i) => i + 1), mo = Array.from({ length: 12 }, (_, i) => i + 1), dayo = Array.from({ length: 31 }, (_, i) => i + 1);
 
@@ -499,10 +345,7 @@ export default function DocumentChecklist() {
       {/* Left: Edit panel */}
       <div className="flex-1 min-w-0">
         {/* Header with settings */}
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={handlePDF} disabled={pdfLoading} className="px-4 py-2 rounded-xl text-xs font-medium" style={{ border: "1.5px dashed #c7d2fe", background: "#fff", color: "#4338ca" }}>
-            {pdfLoading ? "⏳ 読み取り中…" : "📄 PDFから取込"}
-          </button>
+        <div className="flex items-center justify-end mb-4">
           <button onClick={() => setScreen("settings")} className="px-3 py-2 rounded-xl text-xs font-medium" style={{ background: "#f0f3f8", color: "#566275", border: "1.5px solid #e5e9f0" }}>⚙ 設定</button>
         </div>
 
