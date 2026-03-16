@@ -177,6 +177,23 @@ export default function DocumentChecklist() {
     return list;
   };
   const activeItems = buildActive();
+  const activeNotes = notesTmpl.filter((_, i) => state.noteEnabled[i]);
+  const customNotes = state.customNotes || [];
+  const introText = cm ? INTRO.mail : INTRO.default;
+  const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
+  const buildOneReceiptDate = (rc) => {
+    if (!rc) return "";
+    const { era, r, m, d: dd, num } = rc;
+    if (!era && !r && !m && !dd && !num) return "";
+    let s = "";
+    if (era || r || m || dd) s = `${era || ""}${r || ""}年${m || ""}月${dd || ""}日`;
+    if (num) s += num.endsWith("号") ? num : num + "号";
+    return s;
+  };
+  const itemDisplayText = (it, d) => {
+    if (it.isCorpDoc) return `${corpSealPrefix}「${it.text}」`;
+    return it.text;
+  };
 
   // Preview用: rights docを受付エントリーごとに個別の項目に展開
   const previewItems = useMemo(() => {
@@ -196,43 +213,6 @@ export default function DocumentChecklist() {
     }
     return result;
   }, [activeItems, state.details]);
-  const activeNotes = notesTmpl.filter((_, i) => state.noteEnabled[i]);
-  const customNotes = state.customNotes || [];
-  const introText = cm ? INTRO.mail : INTRO.default;
-  const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
-  const buildOneReceiptDate = (rc) => {
-    if (!rc) return "";
-    const { era, r, m, d: dd, num } = rc;
-    if (!era && !r && !m && !dd && !num) return "";
-    let s = "";
-    if (era || r || m || dd) s = `${era || ""}${r || ""}年${m || ""}月${dd || ""}日`;
-    if (num) s += num.endsWith("号") ? num : num + "号";
-    return s;
-  };
-  const rightsTypeName = (type) => type === "権利証" ? "登記済権利証" : "登記識別情報通知";
-  const buildRightsDisplay = (d) => {
-    const receipts = d?.receipts;
-    if (!receipts || receipts.length === 0) {
-      // legacy fallback
-      const name = rightsTypeName(d?.rightsType);
-      const era = d?.receiptEra, r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
-      const ri = buildOneReceiptDate({ era, r, m, d: dd, num }) || d?.receiptInfo || "";
-      return [{ name, info: ri }];
-    }
-    // group by type
-    const groups = {};
-    for (const rc of receipts) {
-      const t = rc.type || "識別情報", name = rightsTypeName(t);
-      if (!groups[name]) groups[name] = [];
-      const info = buildOneReceiptDate(rc);
-      if (info) groups[name].push(info);
-    }
-    return Object.entries(groups).map(([name, infos]) => ({ name, info: infos.join("、") }));
-  };
-  const itemDisplayText = (it, d) => {
-    if (it.isCorpDoc) return `${corpSealPrefix}「${it.text}」`;
-    return it.text;
-  };
 
   const buildNote = n => {
     if (n.template === "pre_check") {
