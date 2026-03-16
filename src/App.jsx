@@ -185,10 +185,10 @@ const Inp=({label,value,onChange,type="number",suffix,note,min,step,placeholder,
         onChange={e=>onChange(type==="number"?(e.target.value===""?"":Number(e.target.value)):e.target.value)}
         className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
         style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",color:"#1a2233",fontVariantNumeric:"tabular-nums"}}
-        onFocus={e=>{e.target.style.borderColor="#3d7ce0";e.target.style.background="#fff"}}
+        onFocus={e=>{e.target.style.borderColor="#4338ca";e.target.style.background="#fff"}}
         onBlur={e=>{e.target.style.borderColor="#dce1ea";e.target.style.background="#f0f3f8"}} />
       {suffix&&<span className="text-xs whitespace-nowrap flex-shrink-0" style={{color:"#8393a7"}}>{suffix}</span>}
-    </div>{note&&<p className="text-xs mt-1" style={{color:"#3d7ce0"}}>{note}</p>}</div>
+    </div>{note&&<p className="text-xs mt-1" style={{color:"#4338ca"}}>{note}</p>}</div>
 );
 const Sel=({label,value,onChange,options})=>(
   <div className="mb-3">{label&&<label className="block text-xs font-medium mb-1" style={{color:"#566275"}}>{label}</label>}
@@ -201,14 +201,14 @@ const Sel=({label,value,onChange,options})=>(
 const Chk=({label,checked,onChange,accent})=>(
   <div className="flex items-center gap-2 mb-2 cursor-pointer select-none text-sm" style={{color:"#3a4557"}} onClick={e=>{e.preventDefault();onChange();}}>
     <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
-      style={{background:checked?(accent||"#3d7ce0"):"#e2e8f0",border:checked?"none":"1.5px solid #c5cdd8"}}>
+      style={{background:checked?(accent||"#4338ca"):"#e2e8f0",border:checked?"none":"1.5px solid #c5cdd8"}}>
       {checked&&<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
     </div><span>{label}</span></div>
 );
 const Rw=({label,value,sub,hl,bold})=>(
   <div className="flex justify-between items-baseline py-1.5" style={{borderBottom:"1px solid #edf0f5"}}>
     <span className={`text-sm ${bold?"font-bold":""}`} style={{color:sub?"#8393a7":"#3a4557"}}>{label}</span>
-    <span className={`text-sm ${bold?"font-bold":"font-medium"}`} style={{color:hl?"#2563eb":"#1a2233",fontVariantNumeric:"tabular-nums"}}>{value}</span></div>
+    <span className={`text-sm ${bold?"font-bold":"font-medium"}`} style={{color:hl?"#4338ca":"#1a2233",fontVariantNumeric:"tabular-nums"}}>{value}</span></div>
 );
 function StepRow({label,note,count,setCount,unitL}){
   return(<div className="py-2.5" style={{borderBottom:"1px solid #f0f3f8"}}>
@@ -323,12 +323,12 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
                 <div className="flex-1">{i===0&&<label className="block text-xs mb-1" style={{color:"#8393a7"}}>項目名</label>}
                   <input type="text" value={s.name} placeholder="項目名" onChange={e=>updSc(i,{name:e.target.value})}
                     className="w-full px-3 py-2 rounded-lg text-sm outline-none" style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",color:"#1a2233"}}
-                    onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} /></div>
+                    onFocus={e=>{e.target.style.borderColor="#4338ca"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} /></div>
                 <div style={{width:120}}>{i===0&&<label className="block text-xs mb-1" style={{color:"#8393a7"}}>金額</label>}
                   <div className="flex items-center gap-1"><input type="number" value={s.amount} min={0} step={1000}
                     onChange={e=>updSc(i,{amount:e.target.value===""?0:Number(e.target.value)})}
                     className="w-full px-3 py-2 rounded-lg text-sm outline-none text-right" style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",color:"#1a2233",fontVariantNumeric:"tabular-nums"}}
-                    onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
+                    onFocus={e=>{e.target.style.borderColor="#4338ca"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
                     <span className="text-xs flex-shrink-0" style={{color:"#8393a7"}}>円</span></div></div>
                 <button onClick={()=>rmSc(i)} className="text-xs px-2 py-2 rounded-lg hover:bg-red-50 flex-shrink-0" style={{color:"#e53e3e"}}>✕</button>
               </div>
@@ -366,7 +366,7 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
                   <input type="text" value={si.name} placeholder="項目名" onChange={e=>updSI(i,{name:e.target.value})}
                     className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none font-medium"
                     style={{background:"#fff",border:"1.5px solid #dce1ea",color:"#1a2233"}}
-                    onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
+                    onFocus={e=>{e.target.style.borderColor="#4338ca"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
                   <button onClick={()=>rmSI(i)} className="text-xs px-2 py-1 rounded-lg hover:bg-red-50 flex-shrink-0" style={{color:"#e53e3e"}}>✕</button>
                 </div>
                 <div className="grid grid-cols-3 gap-x-2">
@@ -375,20 +375,20 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
                       onChange={e=>updSI(i,{fee:e.target.value===""?0:Number(e.target.value)})}
                       className="w-full px-2 py-1.5 rounded-lg text-sm outline-none text-right"
                       style={{background:"#fff",border:"1.5px solid #dce1ea",fontVariantNumeric:"tabular-nums"}}
-                      onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
+                      onFocus={e=>{e.target.style.borderColor="#4338ca"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
                       <span className="text-xs flex-shrink-0" style={{color:"#8393a7"}}>円</span></div></div>
                   <div><label className="block text-xs mb-1" style={{color:"#8393a7"}}>実費</label>
                     <div className="flex items-center gap-1"><input type="number" value={si.jippi} min={0}
                       onChange={e=>updSI(i,{jippi:e.target.value===""?0:Number(e.target.value)})}
                       className="w-full px-2 py-1.5 rounded-lg text-sm outline-none text-right"
                       style={{background:"#fff",border:"1.5px solid #dce1ea",fontVariantNumeric:"tabular-nums"}}
-                      onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
+                      onFocus={e=>{e.target.style.borderColor="#4338ca"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
                       <span className="text-xs flex-shrink-0" style={{color:"#8393a7"}}>円</span></div></div>
                   <div><label className="block text-xs mb-1" style={{color:"#8393a7"}}>単位</label>
                     <input type="text" value={si.unitLabel} onChange={e=>updSI(i,{unitLabel:e.target.value})}
                       className="w-full px-2 py-1.5 rounded-lg text-sm outline-none"
                       style={{background:"#fff",border:"1.5px solid #dce1ea"}}
-                      onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} /></div>
+                      onFocus={e=>{e.target.style.borderColor="#4338ca"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} /></div>
                 </div>
               </div>
             ))}
@@ -420,7 +420,7 @@ function Settings({ft,setFt,unit,setUnit,surcharges,setSurcharges,stdItems,setSt
                         onClick={()=>!editing&&startEdit(ri,ci)}>
                         {editing?<input ref={inputRef} type="number" value={editVal} onChange={e=>setEditVal(e.target.value)}
                           onBlur={commitEdit} onKeyDown={e=>{if(e.key==="Enter")commitEdit();if(e.key==="Escape")setEditCell(null);}}
-                          className="w-full px-1 py-0.5 rounded text-xs outline-none" style={{background:"#eff6ff",border:"1.5px solid #3d7ce0",fontVariantNumeric:"tabular-nums"}} />
+                          className="w-full px-1 py-0.5 rounded text-xs outline-none" style={{background:"#eff6ff",border:"1.5px solid #4338ca",fontVariantNumeric:"tabular-nums"}} />
                           :ci===0?v.toLocaleString()+"万":v.toLocaleString()}
                       </td>;
                     })}
@@ -453,10 +453,10 @@ function Card({item,index,onUpdate,onRemove,g,scTotal=0}){
   const cl={transfer:"#2563eb",preservation:"#059669",mortgage:"#d97706",rootMortgage:"#dc2626",deletion:"#6b7280",addressChange:"#6b7280"};
   const[showTaxProc,setShowTaxProc]=useState(false);
   return(
-    <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+    <div className="rounded-xl p-5 mb-4" style={{background:"#fff",border:"1px solid #e5e9f0",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2"><div className="w-1.5 h-6 rounded-full" style={{background:cl[item.type]}} />
-          <span className="text-xs font-bold" style={{color:cl[item.type]}}>{itemLabel(item)} #{index+1}</span></div>
+          <span className="text-sm font-bold" style={{color:cl[item.type]}}>{itemLabel(item)} #{index+1}</span></div>
         <button onClick={onRemove} className="text-xs px-2 py-1 rounded hover:bg-red-50" style={{color:"#e53e3e"}}>削除</button></div>
       <div className="grid grid-cols-2 gap-x-3">
         <Sel label="登記種別" value={item.type} onChange={v=>u({type:v})} options={[
@@ -528,14 +528,14 @@ function BankMgr({saved,setSaved,onSelect,onClose}){
           {saved.length>0&&<div className="mb-4">{saved.map(b=>(
             <div key={b.id} className="flex items-center justify-between p-2.5 rounded-lg mb-1.5" style={{background:"#f5f7fb",border:"1px solid #e5e9f0"}}>
               <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{b.label}</p><p className="text-xs" style={{color:"#8393a7"}}>{b.bankName} {b.branchName} {b.accountType} {b.accountNumber}</p></div>
-              <div className="flex gap-1 ml-2"><button onClick={()=>{onSelect(b);onClose();}} className="text-xs px-2.5 py-1 rounded-lg text-white" style={{background:"#3d7ce0"}}>選択</button><button onClick={()=>setSaved(p=>p.filter(x=>x.id!==b.id))} className="text-xs px-2 py-1" style={{color:"#e53e3e"}}>削除</button></div>
+              <div className="flex gap-1 ml-2"><button onClick={()=>{onSelect(b);onClose();}} className="text-xs px-2.5 py-1 rounded-lg text-white" style={{background:"#4338ca"}}>選択</button><button onClick={()=>setSaved(p=>p.filter(x=>x.id!==b.id))} className="text-xs px-2 py-1" style={{color:"#e53e3e"}}>削除</button></div>
             </div>))}</div>}
           <div className="p-3 rounded-lg" style={{background:"#f0f9ff",border:"1px solid #bae6fd"}}>
             <p className="text-xs font-bold mb-2" style={{color:"#0369a1"}}>新規登録</p>
             <Inp label="表示名" value={nb.label} onChange={v=>setNb(p=>({...p,label:v}))} type="text" placeholder="メイン口座" />
             <div className="grid grid-cols-2 gap-x-2"><Inp label="銀行名" value={nb.bankName} onChange={v=>setNb(p=>({...p,bankName:v}))} type="text" /><Inp label="支店名" value={nb.branchName} onChange={v=>setNb(p=>({...p,branchName:v}))} type="text" /></div>
             <div className="grid grid-cols-2 gap-x-2"><Sel label="種別" value={nb.accountType} onChange={v=>setNb(p=>({...p,accountType:v}))} options={[{value:"普通",label:"普通"},{value:"当座",label:"当座"}]} /><Inp label="口座番号" value={nb.accountNumber} onChange={v=>setNb(p=>({...p,accountNumber:v}))} type="text" /></div>
-            <button onClick={add} className="w-full py-2 rounded-lg text-sm font-medium text-white mt-1" style={{background:nb.bankName&&nb.branchName?"#3d7ce0":"#c5cdd8"}} disabled={!nb.bankName||!nb.branchName}>登録</button>
+            <button onClick={add} className="w-full py-2 rounded-lg text-sm font-medium text-white mt-1" style={{background:nb.bankName&&nb.branchName?"#4338ca":"#c5cdd8"}} disabled={!nb.bankName||!nb.branchName}>登録</button>
           </div>
         </div>
       </div>
@@ -597,21 +597,21 @@ function Export({ci,setCi,items,rows,rate,g,onClose,saved,setSaved}){
               <input list="dl-clients" type="text" value={ci.client} onChange={e=>u({client:e.target.value})}
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
                 style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",color:"#1a2233"}}
-                onFocus={e=>{e.target.style.borderColor="#3d7ce0";e.target.style.background="#fff"}}
+                onFocus={e=>{e.target.style.borderColor="#4338ca";e.target.style.background="#fff"}}
                 onBlur={e=>{e.target.style.borderColor="#dce1ea";e.target.style.background="#f0f3f8"}} />
               <datalist id="dl-clients">{CLIENTS.map(c=><option key={c} value={c}/>)}</datalist></div></div>
           <h4 className="text-xs font-bold mt-2 mb-2" style={{color:"#566275"}}>顧客名</h4>
           {[0,1,2].map(i=><div key={i} className="grid gap-x-2 mb-1" style={{gridTemplateColumns:"1fr auto"}}><Inp placeholder={`顧客名${["①","②","③"][i]}`} value={(ci.customers[i]||{}).name||""} onChange={v=>uc(i,{name:v})} type="text" /><div style={{width:90}}><Sel value={(ci.customers[i]||{}).title||""} onChange={v=>uc(i,{title:v})} options={[{value:"",label:"なし"},{value:"様",label:"様"},{value:"御中",label:"御中"}]} /></div></div>)}
-          <h4 className="text-xs font-bold mt-2 mb-2 flex items-center justify-between" style={{color:"#566275"}}><span>振込先</span><button onClick={()=>setShowBM(true)} className="text-xs px-2 py-1 rounded-lg" style={{background:"#eef2ff",color:"#3d7ce0"}}>マスタ</button></h4>
-          <div className="mb-2"><div className="flex items-center gap-1 mb-1"><span className="text-xs" style={{color:"#8393a7"}}>①</span>{saved.length>0&&<select className="text-xs px-2 py-0.5 rounded border ml-auto" style={{color:"#3d7ce0",borderColor:"#d4deff",background:"#eef2ff"}} value="" onChange={e=>{const b=saved.find(x=>String(x.id)===e.target.value);if(b)sb(b,0);}}><option value="">選択...</option>{saved.map(b=><option key={b.id} value={b.id}>{b.label}</option>)}</select>}</div><div className="grid grid-cols-4 gap-x-2"><Inp placeholder="銀行名" value={(ci.banks[0]||{}).bankName||""} onChange={v=>ub(0,{bankName:v})} type="text" /><Inp placeholder="支店名" value={(ci.banks[0]||{}).branchName||""} onChange={v=>ub(0,{branchName:v})} type="text" /><Inp placeholder="種別" value={(ci.banks[0]||{}).accountType||""} onChange={v=>ub(0,{accountType:v})} type="text" /><Inp placeholder="口座番号" value={(ci.banks[0]||{}).accountNumber||""} onChange={v=>ub(0,{accountNumber:v})} type="text" /></div></div>
+          <h4 className="text-xs font-bold mt-2 mb-2 flex items-center justify-between" style={{color:"#566275"}}><span>振込先</span><button onClick={()=>setShowBM(true)} className="text-xs px-2 py-1 rounded-lg" style={{background:"#eef2ff",color:"#4338ca"}}>マスタ</button></h4>
+          <div className="mb-2"><div className="flex items-center gap-1 mb-1"><span className="text-xs" style={{color:"#8393a7"}}>①</span>{saved.length>0&&<select className="text-xs px-2 py-0.5 rounded border ml-auto" style={{color:"#4338ca",borderColor:"#d4deff",background:"#eef2ff"}} value="" onChange={e=>{const b=saved.find(x=>String(x.id)===e.target.value);if(b)sb(b,0);}}><option value="">選択...</option>{saved.map(b=><option key={b.id} value={b.id}>{b.label}</option>)}</select>}</div><div className="grid grid-cols-4 gap-x-2"><Inp placeholder="銀行名" value={(ci.banks[0]||{}).bankName||""} onChange={v=>ub(0,{bankName:v})} type="text" /><Inp placeholder="支店名" value={(ci.banks[0]||{}).branchName||""} onChange={v=>ub(0,{branchName:v})} type="text" /><Inp placeholder="種別" value={(ci.banks[0]||{}).accountType||""} onChange={v=>ub(0,{accountType:v})} type="text" /><Inp placeholder="口座番号" value={(ci.banks[0]||{}).accountNumber||""} onChange={v=>ub(0,{accountNumber:v})} type="text" /></div></div>
           <div className="mt-2"><Chk label="源泉対象" checked={!!ci.withholding} onChange={()=>u({withholding:!ci.withholding})} /></div>
           <div className="grid grid-cols-2 gap-x-3"><Inp label="備考" value={ci.note} onChange={v=>u({note:v})} type="text" /><Inp label="メモ" value={ci.memo} onChange={v=>u({memo:v})} type="text" /></div>
           <h4 className="text-xs font-bold mt-3 mb-2" style={{color:"#566275"}}>プレビュー</h4>
           <div className="p-3 rounded-lg text-xs overflow-x-auto" style={{background:"#f5f7fb",fontFamily:"'Courier New',monospace",whiteSpace:"pre",lineHeight:1.7,color:"#3a4557",maxHeight:180,overflowY:"auto"}}>{tsv}</div>
         </div>
         <div className="flex gap-3 px-5 py-4 flex-shrink-0" style={{borderTop:"1px solid #e5e9f0",borderRadius:"0 0 1rem 1rem"}}>
-          <button onClick={doCopy} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{background:"#eef2ff",color:"#3d7ce0",border:"1px solid #d4deff"}}>クリップボードにコピー</button>
-          <button onClick={doDL} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white" style={{background:"linear-gradient(135deg,#3d7ce0,#2558b3)"}}>TSVダウンロード</button>
+          <button onClick={doCopy} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{background:"#eef2ff",color:"#4338ca",border:"1px solid #d4deff"}}>クリップボードにコピー</button>
+          <button onClick={doDL} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white" style={{background:"#4338ca"}}>TSVダウンロード</button>
         </div>
       </div>
       {showBM&&<BankMgr saved={saved} setSaved={setSaved} onSelect={b=>sb(b,0)} onClose={()=>setShowBM(false)} />}
@@ -677,30 +677,23 @@ export default function App(){
   };
 
   return(
-    <div className="min-h-screen" style={{background:"linear-gradient(160deg,#f5f7fb,#e8ecf4)",fontFamily:"'Noto Sans JP',sans-serif"}}>
-      <header className="sticky top-0 z-10 backdrop-blur-md" style={{background:"rgba(255,255,255,0.88)",borderBottom:"1px solid #e5e9f0"}}>
-        <div style={{maxWidth:1360}} className="mx-auto px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background:"linear-gradient(135deg,#1e3a5f,#3d7ce0)"}}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="#fff" strokeWidth="1.3"/></svg>
-            </div>
-            <div><h1 className="text-sm font-bold" style={{color:"#1a2233"}}>報酬・登録免許税 自動計算</h1><p className="text-xs" style={{color:"#8393a7"}}>報酬基準表準拠</p></div>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={()=>setShowCfg(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{background:"#4338ca",color:"#fff"}}>設定</button>
-            <button onClick={()=>setShowEx(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{background:"#059669",color:"#fff"}}>帳票出力</button>
-          </div>
-        </div>
-      </header>
+    <div style={{fontFamily:"'Noto Sans JP',sans-serif"}}>
 
       {/* ── メイン2カラム ── */}
-      <main style={{maxWidth:1360,display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,alignItems:"start"}} className="mx-auto px-8 py-5">
+      <main style={{maxWidth:1400,display:"grid",gridTemplateColumns:"1fr 1fr",gap:28,alignItems:"start"}} className="mx-auto px-8 py-6">
         {/* ── 左カラム: 共通設定 + 取引項目 ── */}
         <div style={{minWidth:0}}>
-          <div className="rounded-xl p-4 mb-4" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold" style={{color:"#4338ca"}}>共通設定</h3>
-              <button onClick={()=>setCommonOpen(!commonOpen)} className="text-xs px-2 py-0.5 rounded" style={{color:"#6366f1",background:"#eef2ff"}}>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-bold" style={{color:"#1a2233"}}>取引項目</h2>
+            <div className="flex gap-2">
+              <button onClick={()=>setShowCfg(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{background:"#fff",border:"1.5px solid #c7d2fe",color:"#4338ca"}}>設定</button>
+              <button onClick={()=>setShowEx(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{background:"#4338ca",color:"#fff"}}>帳票出力</button>
+            </div>
+          </div>
+          <div className="rounded-xl p-5 mb-5" style={{background:"#fff",border:"1.5px solid #c7d2fe",boxShadow:"0 2px 8px rgba(99,102,241,0.08)"}}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold" style={{color:"#4338ca"}}>共通設定</h3>
+              <button onClick={()=>setCommonOpen(!commonOpen)} className="text-xs px-2 py-0.5 rounded" style={{color:"#4338ca",background:"#eef2ff"}}>
                 {commonOpen?"折りたたむ":"展開"}</button>
             </div>
             {commonOpen?<>
@@ -716,11 +709,11 @@ export default function App(){
                 {value:"general",label:"一般住宅（移転3/1000・保存1.5/1000・設定1/1000）"},
                 {value:"premium",label:"長期優良・低炭素（移転1/1000・保存1/1000・設定1/1000）"},
               ]} />
-            </>:<div className="text-xs" style={{color:"#6366f1"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</div>}
+            </>:<div className="text-xs" style={{color:"#4338ca"}}>{surcharges.filter(s=>s.name&&enabledSc[s.id]).map(s=>s.name).join("・")||"加算なし"} / {housingCert==="none"?"家屋証明なし":housingCert==="general"?"一般住宅":"長期優良"}</div>}
           </div>
 
           {items.map((it,i)=><Card key={i} item={it} index={i} g={g} scTotal={scTotal} onUpdate={ni=>setItems(p=>p.map((x,j)=>j===i?ni:x))} onRemove={()=>setItems(p=>p.filter((_,j)=>j!==i))} />)}
-          <div className="flex gap-2 mb-4 flex-wrap">
+          <div className="flex gap-2 mb-5 flex-wrap">
             {[["transfer","＋移転"],["preservation","＋保存"],["mortgage","＋抵当権"],["rootMortgage","＋根抵当"],["deletion","＋抹消"],["addressChange","＋住変"]].map(([t,l])=>(
               <button key={t} onClick={()=>setItems(p=>[...p,mk(t)])} className="py-2 px-3 rounded-xl text-xs font-medium hover:shadow-md"
                 style={{background:"#fff",border:"1.5px dashed #c5cdd8",color:"#5a6577"}}>{l}</button>
@@ -729,9 +722,10 @@ export default function App(){
         </div>
 
         {/* ── 右カラム: 実費 + 消費税 + 合計（sticky） ── */}
-        <div style={{position:"sticky",top:68,minWidth:0}}>
-          <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0"}}>
-            <h3 className="text-xs font-bold mb-2" style={{color:"#566275"}}>謄本・情報 / 実費</h3>
+        <div style={{position:"sticky",top:60,minWidth:0}}>
+          <h2 className="text-base font-bold mb-5" style={{color:"#1a2233"}}>費用明細</h2>
+          <div className="rounded-xl p-5 mb-4" style={{background:"#fff",border:"1px solid #e5e9f0"}}>
+            <h3 className="text-sm font-bold mb-3" style={{color:"#4338ca"}}>謄本・情報 / 実費</h3>
             {rows.map((row,idx)=>{
               const arrows=(<div className="flex flex-col flex-shrink-0" style={{gap:0,marginRight:6}}>
                 <button onClick={()=>moveRow(idx,-1)} disabled={idx===0} className="text-xs leading-none px-0.5" style={{color:idx===0?"#d1d5db":"#4338ca",background:"none",border:"none",cursor:idx===0?"default":"pointer"}}>▲</button>
@@ -765,7 +759,7 @@ export default function App(){
                         onChange={e=>updateRow(idx,{amount:e.target.value===""?0:Number(e.target.value)})}
                         className="w-24 px-2 py-1.5 rounded-lg text-sm text-right outline-none"
                         style={{background:"#f0f3f8",border:"1.5px solid #dce1ea",fontVariantNumeric:"tabular-nums"}}
-                        onFocus={e=>{e.target.style.borderColor="#3d7ce0"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
+                        onFocus={e=>{e.target.style.borderColor="#4338ca"}} onBlur={e=>{e.target.style.borderColor="#dce1ea"}} />
                       <span className="text-xs" style={{color:"#8393a7"}}>円</span>
                     </div>
                   </div>
@@ -784,7 +778,7 @@ export default function App(){
             <div className="flex gap-2 mt-2">
               <button onClick={()=>setRows(p=>[...p,{kind:"extra",name:"",fee:"",expense:""}])}
                 className="text-xs py-2 px-4 rounded-lg font-medium flex-1"
-                style={{color:"#3d7ce0",background:"#eef2ff",border:"1.5px dashed #c7d2fe"}}>＋ 自由入力</button>
+                style={{color:"#4338ca",background:"#eef2ff",border:"1.5px dashed #c7d2fe"}}>＋ 自由入力</button>
               {stdItems.length>0&&<select value="" onChange={e=>{if(e.target.value)addFromTemplate(e.target.value);}}
                 className="text-xs py-2 px-3 rounded-lg font-medium flex-1 cursor-pointer"
                 style={{color:"#4338ca",background:"#eef2ff",border:"1.5px dashed #c7d2fe",appearance:"none",
@@ -800,17 +794,17 @@ export default function App(){
             </div>}
           </div>
 
-          <div className="rounded-xl p-4 mb-3" style={{background:"#fff",border:"1px solid #e5e9f0"}}><Inp label="消費税率" value={rate} onChange={setRate} suffix="%" min={0} step={1} /></div>
+          <div className="rounded-xl p-5 mb-4" style={{background:"#fff",border:"1px solid #e5e9f0"}}><Inp label="消費税率" value={rate} onChange={setRate} suffix="%" min={0} step={1} /></div>
 
-          <div className="rounded-xl p-5 mb-3" style={{background:"linear-gradient(135deg,#1e3a5f,#2558b3)",color:"#fff"}}>
-            <h3 className="text-xs mb-3" style={{color:"rgba(255,255,255,0.55)"}}>合計</h3>
+          <div className="rounded-xl p-5 mb-4" style={{background:"linear-gradient(135deg,#4338ca,#3730a3)",color:"#fff"}}>
+            <h3 className="text-sm font-bold mb-3" style={{color:"rgba(255,255,255,0.7)"}}>合計</h3>
             {[["報酬（税抜）",fmt(tot.tf)],[`消費税（${rate}%）`,fmt(tot.ct)],["報酬（税込）",fmt(tot.tf+tot.ct)],["登録免許税",fmt(tot.tt)],...(tot.et>0?[["実費・立替金",fmt(tot.et)]]:[])]
               .map(([l,v],i)=><div key={i} className="flex justify-between mb-1"><span className="text-sm" style={{color:"rgba(255,255,255,0.75)"}}>{l}</span><span className="text-sm font-medium" style={{fontVariantNumeric:"tabular-nums"}}>{v}</span></div>)}
             <div className="pt-3 mt-2" style={{borderTop:"1px solid rgba(255,255,255,0.2)"}}>
               <div className="flex justify-between items-baseline"><span className="font-bold">合計請求額</span><span className="text-2xl font-bold" style={{fontVariantNumeric:"tabular-nums"}}>{fmt(tot.g)}</span></div>
             </div>
           </div>
-          <button onClick={()=>setShowEx(true)} className="w-full py-3 rounded-xl text-sm font-bold text-white mb-4 hover:shadow-lg" style={{background:"linear-gradient(135deg,#059669,#047857)"}}>帳票システム用データを出力</button>
+          <button onClick={()=>setShowEx(true)} className="w-full py-3 rounded-xl text-sm font-bold text-white mb-4 hover:shadow-lg" style={{background:"#4338ca"}}>帳票システム用データを出力</button>
         </div>
 
         <p className="text-xs text-center px-4" style={{color:"#a0aec0",gridColumn:"1 / -1"}}>※ 参考値。土地売買15/1000は令和8年3月31日まで。住宅用家屋証明は令和9年3月31日まで。</p>

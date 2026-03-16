@@ -279,7 +279,7 @@ export default function DocumentChecklist() {
             <input className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#f0f3f8", border: "1.5px solid #dce1ea" }} value={office[k]} onChange={e => setOffice(p => ({ ...p, [k]: e.target.value }))} />
           </div>
         ))}
-        <button onClick={() => setOffice({ ...DEFAULT_OFFICE })} className="text-xs px-3 py-1 rounded-lg mt-1" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
+        <button onClick={() => setOffice({ ...DEFAULT_OFFICE })} className="text-xs px-3 py-1 rounded-lg mt-1" style={{ color: "#4338ca", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
 
       {/* 郵送時の追加書類 */}
@@ -297,7 +297,7 @@ export default function DocumentChecklist() {
           <button className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#4338ca", color: "#fff" }}
             onClick={() => { if (newInput.trim()) { setMailItems(p => [...p, newInput.trim()]); setNewInput(""); } }}>追加</button>
         </div>
-        <button onClick={() => setMailItems(() => [...DEFAULT_MAIL_ITEMS])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
+        <button onClick={() => setMailItems(() => [...DEFAULT_MAIL_ITEMS])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#4338ca", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
 
       {/* よく使う項目 */}
@@ -315,7 +315,7 @@ export default function DocumentChecklist() {
           <button className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "#4338ca", color: "#fff" }}
             onClick={() => { if (newInput.trim()) { setExtraItems(p => [...p, newInput.trim()]); setNewInput(""); } }}>追加</button>
         </div>
-        <button onClick={() => setExtraItems([...DEFAULT_EXTRA])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#6366f1", background: "#eef2ff" }}>デフォルトに戻す</button>
+        <button onClick={() => setExtraItems([...DEFAULT_EXTRA])} className="text-xs px-3 py-1 rounded-lg mt-2" style={{ color: "#4338ca", background: "#eef2ff" }}>デフォルトに戻す</button>
       </div>
 
       {/* インポート・エクスポート */}
@@ -373,17 +373,17 @@ export default function DocumentChecklist() {
           <div style={{ marginTop: 20, paddingTop: 10, textAlign: "center" }}><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div>{meta.propertyDescs.filter(s => s).length > 0 ? meta.propertyDescs.filter(s => s).map((pd, i) => <div key={i} style={{ fontSize: 14 }}>{pd}</div>) : <div style={{ fontSize: 14 }}>＿＿＿＿＿＿＿＿</div>}</div>
         </div>
       </div>
-      <button onClick={printPDF} className="w-full py-2.5 rounded-xl text-sm font-bold transition-all mt-3" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
+      <button onClick={printPDF} className="w-full py-2.5 rounded-xl text-sm font-bold transition-all mt-3" style={{ background: "#4338ca", color: "#fff" }}>PDF出力</button>
     </div>
   );
 
   // ========== EDIT (side-by-side with preview) ==========
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
+    <div className="flex flex-col lg:flex-row gap-7">
       {/* Left: Edit panel */}
       <div className="flex-1 min-w-0">
         {/* Header with settings */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <button onClick={handlePDF} disabled={pdfLoading} className="px-4 py-2 rounded-xl text-xs font-medium" style={{ border: "1.5px dashed #c7d2fe", background: "#fff", color: "#4338ca" }}>
             {pdfLoading ? "⏳ 読み取り中…" : "📄 PDFから取込"}
           </button>
@@ -391,14 +391,14 @@ export default function DocumentChecklist() {
         </div>
 
         {/* Tabs: 売主/買主 */}
-        <div className="flex mb-3 rounded-xl overflow-hidden" style={{ border: "1.5px solid #e5e9f0" }}>
+        <div className="flex mb-4 rounded-xl overflow-hidden" style={{ border: "1.5px solid #e5e9f0" }}>
           {[["seller", "売主"], ["buyer", "買主"]].map(([k, l]) => (
             <button key={k} className="flex-1 py-2.5 text-sm font-bold transition-all" style={{ background: tab === k ? "#4338ca" : "#fff", color: tab === k ? "#fff" : "#8393a7" }} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
 
         {/* Toggles */}
-        <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center justify-between mb-4 px-1">
           <div className="flex rounded-lg overflow-hidden" style={{ border: "1.5px solid #dce1ea" }}>
             {[["individual", "個人"], ["corporate", "法人"]].map(([k, l]) => (
               <button key={k} className="px-4 py-1.5 text-xs font-medium transition-all" style={{ background: ce === k ? "#4338ca" : "#f0f3f8", color: ce === k ? "#fff" : "#566275" }} onClick={() => setEntity(p => ({ ...p, [tab]: k }))}>{l}</button>
@@ -413,7 +413,7 @@ export default function DocumentChecklist() {
         </div>
 
         {/* Meta */}
-        <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+        <div className="rounded-xl p-5 mb-4" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
           <div className="flex items-center gap-2 mb-2.5">
             <label className="text-xs font-medium w-16 shrink-0" style={{ color: "#566275" }}>日付</label>
             <div className="flex items-center gap-1 flex-wrap">
@@ -441,8 +441,8 @@ export default function DocumentChecklist() {
         </div>
 
         {/* Items */}
-        <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
-          <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{previewItems.length}件</span></h3>
+        <div className="rounded-xl p-5 mb-4" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+          <h3 className="text-sm font-bold mb-3" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{previewItems.length}件</span></h3>
           {allItems.map((item, idx) => {
             const d = state.details[item.id] || {}, en = state.enabled[item.id], fx = item.fixed;
             return <div key={item.id} className="flex items-start gap-2 py-2 rounded-lg mb-1 px-2" style={{ background: "#f8f9fc", borderLeft: `3px solid ${en ? (fx ? "#8393a7" : "#4338ca") : "#dce1ea"}` }}>
@@ -496,8 +496,8 @@ export default function DocumentChecklist() {
         </div>
 
         {/* Notes */}
-        <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
-          <h3 className="text-xs font-bold mb-2" style={{ color: "#4338ca" }}>注記</h3>
+        <div className="rounded-xl p-5 mb-4" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
+          <h3 className="text-sm font-bold mb-3" style={{ color: "#4338ca" }}>注記</h3>
           {notesTmpl.map((n, i) => <div key={i} className="flex items-start gap-2 mb-1.5" style={{ opacity: state.noteEnabled[i] ? 1 : 0.35 }}>
             <div onClick={() => toggleNote(i)} className="w-4 h-4 rounded flex items-center justify-center cursor-pointer shrink-0 text-[9px] font-bold mt-0.5" style={{ background: state.noteEnabled[i] ? "#4338ca" : "#fff", border: `2px solid ${state.noteEnabled[i] ? "#4338ca" : "#ccc"}`, color: "#fff" }}>{state.noteEnabled[i] && "✓"}</div>
             <span className="text-[11px]" style={{ color: "#566275", lineHeight: 1.5 }}>{buildNote(n)}</span>
@@ -518,8 +518,8 @@ export default function DocumentChecklist() {
 
       {/* Right: Preview panel (sticky on desktop, flows below on mobile) */}
       <div className="w-full lg:w-[560px] lg:shrink-0">
-        <div className="lg:sticky lg:top-4">
-          <h2 className="text-xs font-bold mb-2" style={{ color: "#8393a7" }}>プレビュー</h2>
+        <div className="lg:sticky" style={{ top: 60 }}>
+          <h2 className="text-sm font-bold mb-3" style={{ color: "#1a2233" }}>プレビュー</h2>
           {previewPanel}
         </div>
       </div>
