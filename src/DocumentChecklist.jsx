@@ -468,7 +468,7 @@ export default function DocumentChecklist() {
       </div>
 
       {/* Right: Preview panel (sticky on desktop, flows below on mobile) */}
-      <div className="w-full lg:w-[380px] lg:shrink-0">
+      <div className="w-full lg:w-[560px] lg:shrink-0">
         <div className="lg:sticky lg:top-4">
           <h2 className="text-xs font-bold mb-2" style={{ color: "#8393a7" }}>プレビュー</h2>
           {previewPanel}
