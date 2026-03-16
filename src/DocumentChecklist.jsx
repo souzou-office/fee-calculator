@@ -133,7 +133,7 @@ export default function DocumentChecklist() {
     if (configStates[ck]) return configStates[ck];
     const items = filterItems(getBase(tab, ce), cm, mailItems).map(it => ({ ...it }));
     const enabled = {}, details = {};
-    items.forEach(it => { enabled[it.id] = true; details[it.id] = { count: it.defaultCount || "", receiptInfo: "", rightsType: "識別情報", receipts: it.isRightsDoc ? [{ type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "" }] : undefined }; });
+    items.forEach(it => { enabled[it.id] = true; details[it.id] = { count: it.defaultCount || "", receiptInfo: "", rightsType: "識別情報", receipts: it.isRightsDoc ? [{ type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "", count: "１通" }] : undefined }; });
     const nts = getNotes(tab, ce, cm), ne = {}; nts.forEach((_, i) => { ne[i] = true; });
     const st = { items, enabled, details, noteEnabled: ne, customItems: [], customNotes: [] };
     setConfigStates(p => ({ ...p, [ck]: st })); return st;
@@ -151,13 +151,13 @@ export default function DocumentChecklist() {
   });
   const addReceipt = (id) => upd(s => {
     const d = { ...(s.details[id] || {}) };
-    d.receipts = [...(d.receipts || []), { type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "" }];
+    d.receipts = [...(d.receipts || []), { type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "", count: "１通" }];
     return { ...s, details: { ...s.details, [id]: d } };
   });
   const removeReceipt = (id, idx) => upd(s => {
     const d = { ...(s.details[id] || {}) };
     d.receipts = (d.receipts || []).filter((_, i) => i !== idx);
-    if (d.receipts.length === 0) d.receipts = [{ type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "" }];
+    if (d.receipts.length === 0) d.receipts = [{ type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "", count: "１通" }];
     return { ...s, details: { ...s.details, [id]: d } };
   });
   const toggleNote = i => upd(s => ({ ...s, noteEnabled: { ...s.noteEnabled, [i]: !s.noteEnabled[i] } }));
@@ -177,6 +177,25 @@ export default function DocumentChecklist() {
     return list;
   };
   const activeItems = buildActive();
+
+  // Preview用: rights docを受付エントリーごとに個別の項目に展開
+  const previewItems = useMemo(() => {
+    const result = [];
+    for (const item of activeItems) {
+      if (item.isRightsDoc) {
+        const d = state.details[item.id] || {};
+        const receipts = d.receipts || [{ type: d.rightsType || "識別情報", era: d.receiptEra || "令和", r: d.receiptR || 0, m: d.receiptM || 0, d: d.receiptD || 0, num: d.receiptNum || "", count: d.count || "１通" }];
+        receipts.forEach((rc, ri) => {
+          const name = (rc.type || "識別情報") === "権利証" ? "登記済権利証" : "登記識別情報通知";
+          const info = buildOneReceiptDate(rc);
+          result.push({ ...item, id: `${item.id}_rc${ri}`, _rightsExpanded: true, _rightsName: name, _rightsInfo: info, _rightsCount: rc.count || "１通", noteRef: ri === 0 ? item.noteRef : undefined });
+        });
+      } else {
+        result.push(item);
+      }
+    }
+    return result;
+  }, [activeItems, state.details]);
   const activeNotes = notesTmpl.filter((_, i) => state.noteEnabled[i]);
   const customNotes = state.customNotes || [];
   const introText = cm ? INTRO.mail : INTRO.default;
@@ -217,7 +236,7 @@ export default function DocumentChecklist() {
 
   const buildNote = n => {
     if (n.template === "pre_check") {
-      const ri = activeItems.findIndex(it => it.noteRef === "rights"), ii = activeItems.findIndex(it => it.noteRef === "inkan"), ai = activeItems.findIndex(it => it.noteRef === "address");
+      const ri = previewItems.findIndex(it => it.noteRef === "rights"), ii = previewItems.findIndex(it => it.noteRef === "inkan"), ai = previewItems.findIndex(it => it.noteRef === "address");
       const ae = allItems.some(it => it.isAddressChange && state.enabled[it.id]);
       const nums = []; if (ri >= 0) nums.push(FW[ri]); if (ii >= 0) nums.push(FW[ii]); if (ae && ai >= 0) nums.push(`（${FW[ai]}）`);
       return `大変恐縮ですが、上記${nums.join("、")}の書類に関しましては事前確認のため、当事務所宛にメールまたはFAXをお送り頂きますようお願い申し上げます。`;
@@ -357,13 +376,12 @@ export default function DocumentChecklist() {
           <div style={{ marginBottom: 14, textIndent: "1em", fontSize: 13 }}>{introText}</div>
           {preNote && <div style={{ marginBottom: 10, fontSize: 11, color: "#666" }}>＊ {preNote}</div>}
           <div style={{ marginBottom: 14 }}>
-            {activeItems.map((item, idx) => {
+            {previewItems.map((item, idx) => {
               const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
               if (item.isAddressChange) return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><div style={{ flex: 1 }}><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 11, color: "#555", marginTop: 1, lineHeight: 1.5 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 11, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
-              if (item.isSeal) return <div key="_seal" style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span>{item.text}</span></div>;
-              if (item.isRightsDoc) {
-                const groups = buildRightsDisplay(d);
-                return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span style={{ flex: 1 }}>{groups.map((g, gi) => <span key={gi}>{gi > 0 && "／"}{g.name}{g.info && <span style={{ fontSize: 11, color: "#666" }}>（{g.info}）</span>}</span>)}</span>{d.count && <span style={{ fontSize: 12, color: "#555", marginLeft: 6 }}>{d.count}</span>}</div>;
+              if (item.isSeal) return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span>{item.text}</span></div>;
+              if (item._rightsExpanded) {
+                return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span style={{ flex: 1 }}>{item._rightsName}{item._rightsInfo && <span style={{ fontSize: 11, color: "#666" }}>（{item._rightsInfo}）</span>}</span>{item._rightsCount && <span style={{ fontSize: 12, color: "#555", marginLeft: 6 }}>{item._rightsCount}</span>}</div>;
               }
               return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}</span>{d.count && <span style={{ fontSize: 12, color: "#555", marginLeft: 6 }}>{d.count}</span>}</div>;
             })}
@@ -444,7 +462,7 @@ export default function DocumentChecklist() {
 
         {/* Items */}
         <div className="rounded-xl p-4 mb-3" style={{ background: "#fff", border: "1.5px solid #e5e9f0" }}>
-          <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{activeItems.length}件</span></h3>
+          <h3 className="text-xs font-bold mb-3" style={{ color: "#4338ca" }}>書類項目 <span style={{ fontWeight: 400, color: "#8393a7" }}>{previewItems.length}件</span></h3>
           {allItems.map((item, idx) => {
             const d = state.details[item.id] || {}, en = state.enabled[item.id], fx = item.fixed;
             return <div key={item.id} className="flex items-start gap-2 py-2 rounded-lg mb-1 px-2" style={{ background: "#f8f9fc", borderLeft: `3px solid ${en ? (fx ? "#8393a7" : "#4338ca") : "#dce1ea"}` }}>
@@ -468,7 +486,10 @@ export default function DocumentChecklist() {
                         <Combo value={rc.d || 0} options={dayo} onChange={v => updReceipt(item.id, ri, "d", v)} w={38} suffix="日" />
                         {(d.receipts || []).length > 1 && <button className="text-sm leading-none ml-1" style={{ color: "#ccc" }} onClick={() => removeReceipt(item.id, ri)}>×</button>}
                       </div>
-                      <input className="w-full px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={rc.num || ""} onChange={e => updReceipt(item.id, ri, "num", e.target.value)} placeholder="例：第６９９７０" />
+                      <div className="flex items-center gap-1 mt-1">
+                        <input className="flex-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={rc.num || ""} onChange={e => updReceipt(item.id, ri, "num", e.target.value)} placeholder="例：第６９９７０" />
+                        <select className="text-xs px-1 py-1 rounded outline-none shrink-0" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={rc.count || "１通"} onChange={e => updReceipt(item.id, ri, "count", e.target.value)}>{COUNT_OPTIONS.filter(o => o).map(o => <option key={o} value={o}>{o}</option>)}</select>
+                      </div>
                     </div>
                   ))}
                   <button className="text-[11px] font-medium mt-1 px-2 py-0.5 rounded" style={{ color: "#4338ca", background: "#eef2ff" }} onClick={() => addReceipt(item.id)}>＋ 追加</button>
@@ -477,7 +498,7 @@ export default function DocumentChecklist() {
                 {item.isInkan && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#4338ca" }}>→ {en ? (ce === "corporate" ? "会社実印" : "ご実印") : (ce === "corporate" ? "会社印（認印可）" : "個人印（認印可）")} が自動挿入</div>}
                 {item.isCorpDoc && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#8393a7" }}>※ 印鑑証明書の有無で「会社実印」/「会社印（認印可）」が自動切替</div>}
               </div>
-              {item.hasCount && en && <select className="text-xs px-1 py-1 rounded outline-none shrink-0" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.count || ""} onChange={e => updDetail(item.id, "count", e.target.value)}>{COUNT_OPTIONS.map(o => <option key={o} value={o}>{o || "−"}</option>)}</select>}
+              {item.hasCount && !item.isRightsDoc && en && <select className="text-xs px-1 py-1 rounded outline-none shrink-0" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.count || ""} onChange={e => updDetail(item.id, "count", e.target.value)}>{COUNT_OPTIONS.map(o => <option key={o} value={o}>{o || "−"}</option>)}</select>}
               {item.isCustom && <button className="text-base leading-none" style={{ color: "#ccc" }} onClick={() => removeItem(item.id)}>×</button>}
             </div>;
           })}
