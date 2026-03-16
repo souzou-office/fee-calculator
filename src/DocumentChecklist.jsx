@@ -170,7 +170,7 @@ export default function DocumentChecklist() {
     if (!era && !r && !m && !dd && !num) return d?.receiptInfo || "";
     let s = "";
     if (era || r || m || dd) s = `${era || ""}${r || ""}年${m || ""}月${dd || ""}日`;
-    if (num) s += num;
+    if (num) s += num.endsWith("号") ? num : num + "号";
     return s;
   };
   const itemDisplayText = (it, d) => {
@@ -299,7 +299,7 @@ export default function DocumentChecklist() {
     const el = document.getElementById("doc-checklist-preview");
     if (!el) return;
     const w = window.open("", "_blank");
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 10mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:15px;line-height:1.8}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 10mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:15px;line-height:1.8;transform-origin:top left;transform:scale(1.35);width:74%}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
     w.document.close();
     setTimeout(() => w.print(), 500);
   };
