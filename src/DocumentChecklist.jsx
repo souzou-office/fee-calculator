@@ -133,7 +133,7 @@ export default function DocumentChecklist() {
     if (configStates[ck]) return configStates[ck];
     const items = filterItems(getBase(tab, ce), cm, mailItems).map(it => ({ ...it }));
     const enabled = {}, details = {};
-    items.forEach(it => { enabled[it.id] = true; details[it.id] = { count: it.defaultCount || "", receiptInfo: "", rightsType: "識別情報" }; });
+    items.forEach(it => { enabled[it.id] = true; details[it.id] = { count: it.defaultCount || "", receiptInfo: "", rightsType: "識別情報", receipts: it.isRightsDoc ? [{ era: "令和", r: 0, m: 0, d: 0, num: "" }] : undefined }; });
     const nts = getNotes(tab, ce, cm), ne = {}; nts.forEach((_, i) => { ne[i] = true; });
     const st = { items, enabled, details, noteEnabled: ne, customItems: [], customNotes: [] };
     setConfigStates(p => ({ ...p, [ck]: st })); return st;
@@ -144,6 +144,22 @@ export default function DocumentChecklist() {
   const upd = fn => setConfigStates(p => ({ ...p, [ck]: fn(p[ck] || getState()) }));
   const toggleItem = id => { const it = allItems.find(i => i.id === id); if (it?.fixed) return; upd(s => ({ ...s, enabled: { ...s.enabled, [id]: !s.enabled[id] } })); };
   const updDetail = (id, f, v) => upd(s => ({ ...s, details: { ...s.details, [id]: { ...(s.details[id] || {}), [f]: v } } }));
+  const updReceipt = (id, idx, f, v) => upd(s => {
+    const d = { ...(s.details[id] || {}) }, rcs = [...(d.receipts || [])];
+    rcs[idx] = { ...rcs[idx], [f]: v }; d.receipts = rcs;
+    return { ...s, details: { ...s.details, [id]: d } };
+  });
+  const addReceipt = (id) => upd(s => {
+    const d = { ...(s.details[id] || {}) };
+    d.receipts = [...(d.receipts || []), { era: "令和", r: 0, m: 0, d: 0, num: "" }];
+    return { ...s, details: { ...s.details, [id]: d } };
+  });
+  const removeReceipt = (id, idx) => upd(s => {
+    const d = { ...(s.details[id] || {}) };
+    d.receipts = (d.receipts || []).filter((_, i) => i !== idx);
+    if (d.receipts.length === 0) d.receipts = [{ era: "令和", r: 0, m: 0, d: 0, num: "" }];
+    return { ...s, details: { ...s.details, [id]: d } };
+  });
   const toggleNote = i => upd(s => ({ ...s, noteEnabled: { ...s.noteEnabled, [i]: !s.noteEnabled[i] } }));
   const addItem = text => { if (!text.trim()) return; const id = `c_${Date.now()}`; upd(s => ({ ...s, customItems: [...(s.customItems || []), { id, text: text.trim(), hasCount: true, defaultCount: "１通", isCustom: true }], enabled: { ...s.enabled, [id]: true }, details: { ...s.details, [id]: { count: "１通", receiptInfo: "" } } })); setCustomInput(""); };
   const removeItem = id => upd(s => ({ ...s, customItems: (s.customItems || []).filter(i => i.id !== id), enabled: (() => { const e = { ...s.enabled }; delete e[id]; return e; })(), details: (() => { const d = { ...s.details }; delete d[id]; return d; })() }));
@@ -165,13 +181,22 @@ export default function DocumentChecklist() {
   const customNotes = state.customNotes || [];
   const introText = cm ? INTRO.mail : INTRO.default;
   const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
-  const buildReceiptInfo = (d) => {
-    const era = d?.receiptEra, r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
-    if (!era && !r && !m && !dd && !num) return d?.receiptInfo || "";
+  const buildOneReceipt = (rc) => {
+    if (!rc) return "";
+    const { era, r, m, d: dd, num } = rc;
+    if (!era && !r && !m && !dd && !num) return "";
     let s = "";
     if (era || r || m || dd) s = `${era || ""}${r || ""}年${m || ""}月${dd || ""}日`;
     if (num) s += num.endsWith("号") ? num : num + "号";
     return s;
+  };
+  const buildReceiptInfo = (d) => {
+    const receipts = d?.receipts;
+    if (receipts && receipts.length > 0) return receipts.map(buildOneReceipt).filter(Boolean).join("、");
+    // legacy single-entry fallback
+    const era = d?.receiptEra, r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
+    if (!era && !r && !m && !dd && !num) return d?.receiptInfo || "";
+    return buildOneReceipt({ era, r, m, d: dd, num });
   };
   const itemDisplayText = (it, d) => {
     if (it.isRightsDoc) return (d?.rightsType || "識別情報") === "権利証" ? "登記済権利証" : "登記識別情報通知";
@@ -299,7 +324,7 @@ export default function DocumentChecklist() {
     const el = document.getElementById("doc-checklist-preview");
     if (!el) return;
     const w = window.open("", "_blank");
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 10mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px;color:#222;font-size:15px;line-height:1.8;transform-origin:top left;transform:scale(1.35);width:74%}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>必要書類等一覧</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 15mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px 36px;color:#222;font-size:15px;line-height:1.8}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
     w.document.close();
     setTimeout(() => w.print(), 500);
   };
@@ -307,33 +332,33 @@ export default function DocumentChecklist() {
   const previewPanel = (
     <div>
       <div style={{ width: "100%", aspectRatio: "210 / 297", position: "relative", background: "#e8ecf4", borderRadius: 4, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.10)" }}>
-        <div id="doc-checklist-preview" style={{ position: "absolute", inset: 0, overflow: "auto", padding: "32px 28px", background: "#fff", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 12, lineHeight: 1.8, color: "#222" }}>
-          <div style={{ textAlign: "right", marginBottom: 12 }}>{dw}</div>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
-          <div style={{ textAlign: "right", marginBottom: 16, fontSize: 10, lineHeight: 1.7, color: "#444" }}>
+        <div id="doc-checklist-preview" style={{ position: "absolute", inset: 0, overflow: "auto", padding: "32px 28px", background: "#fff", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 14, lineHeight: 1.8, color: "#222" }}>
+          <div style={{ textAlign: "right", marginBottom: 14, fontSize: 12 }}>{dw}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 20 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
+          <div style={{ textAlign: "right", marginBottom: 20, fontSize: 12, lineHeight: 1.7, color: "#444" }}>
             <div>{office.zip} {office.address}</div>
-            <div style={{ fontWeight: 600, fontSize: 12, color: "#222" }}>{office.name}</div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: "#222" }}>{office.name}</div>
             <div>{office.rep}</div>
-            <div style={{ fontSize: 9 }}>TEL : {office.tel} / FAX : {office.fax}</div>
-            <div style={{ fontSize: 9 }}>{office.email}</div>
+            <div style={{ fontSize: 11 }}>TEL : {office.tel} / FAX : {office.fax}</div>
+            <div style={{ fontSize: 11 }}>{office.email}</div>
           </div>
-          <div style={{ textAlign: "center", fontSize: 15, fontWeight: 700, letterSpacing: "0.3em", margin: "10px 0 14px" }}>必 要 書 類 等 一 覧</div>
-          <div style={{ marginBottom: 12, textIndent: "1em", fontSize: 11 }}>{introText}</div>
-          {preNote && <div style={{ marginBottom: 8, fontSize: 9, color: "#666" }}>＊ {preNote}</div>}
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ textAlign: "center", fontSize: 17, fontWeight: 700, letterSpacing: "0.3em", margin: "12px 0 16px" }}>必 要 書 類 等 一 覧</div>
+          <div style={{ marginBottom: 14, textIndent: "1em", fontSize: 13 }}>{introText}</div>
+          {preNote && <div style={{ marginBottom: 10, fontSize: 11, color: "#666" }}>＊ {preNote}</div>}
+          <div style={{ marginBottom: 14 }}>
             {activeItems.map((item, idx) => {
               const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
-              if (item.isAddressChange) return <div key={item.id} style={{ display: "flex", marginBottom: 3, fontSize: 11 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 22 }}>{num}．</span><div style={{ flex: 1 }}><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 9, color: "#555", marginTop: 1, lineHeight: 1.5 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 9, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
-              if (item.isSeal) return <div key="_seal" style={{ display: "flex", marginBottom: 3, fontSize: 11 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 22 }}>{num}．</span><span>{item.text}</span></div>;
+              if (item.isAddressChange) return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><div style={{ flex: 1 }}><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 11, color: "#555", marginTop: 1, lineHeight: 1.5 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 11, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
+              if (item.isSeal) return <div key="_seal" style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span>{item.text}</span></div>;
               const ri = buildReceiptInfo(d);
-              return <div key={item.id} style={{ display: "flex", marginBottom: 3, fontSize: 11 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 22 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 9, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 10, color: "#555", marginLeft: 4 }}>{d.count}</span>}</div>;
+              return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 11, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 12, color: "#555", marginLeft: 6 }}>{d.count}</span>}</div>;
             })}
           </div>
-          {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 12, paddingTop: 6, borderTop: "1px dashed #ddd" }}>
-            {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 10, color: "#555", marginBottom: 3, lineHeight: 1.5 }}>＊ {buildNote(n)}</div>)}
-            {customNotes.map((n) => <div key={n.id} style={{ fontSize: 10, color: "#555", marginBottom: 3, lineHeight: 1.5 }}>＊ {n.text}</div>)}
+          {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 14, paddingTop: 8, borderTop: "1px dashed #ddd" }}>
+            {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 12, color: "#555", marginBottom: 4, lineHeight: 1.5 }}>＊ {buildNote(n)}</div>)}
+            {customNotes.map((n) => <div key={n.id} style={{ fontSize: 12, color: "#555", marginBottom: 4, lineHeight: 1.5 }}>＊ {n.text}</div>)}
           </div>}
-          <div style={{ marginTop: 16, paddingTop: 8, textAlign: "center" }}><div style={{ fontSize: 12, fontWeight: 600, marginBottom: 3 }}>不動産の表示</div>{meta.propertyDescs.filter(s => s).length > 0 ? meta.propertyDescs.filter(s => s).map((pd, i) => <div key={i} style={{ fontSize: 12 }}>{pd}</div>) : <div style={{ fontSize: 12 }}>＿＿＿＿＿＿＿＿</div>}</div>
+          <div style={{ marginTop: 20, paddingTop: 10, textAlign: "center" }}><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div>{meta.propertyDescs.filter(s => s).length > 0 ? meta.propertyDescs.filter(s => s).map((pd, i) => <div key={i} style={{ fontSize: 14 }}>{pd}</div>) : <div style={{ fontSize: 14 }}>＿＿＿＿＿＿＿＿</div>}</div>
         </div>
       </div>
       <button onClick={printPDF} className="w-full py-2.5 rounded-xl text-sm font-bold transition-all mt-3" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
@@ -415,15 +440,22 @@ export default function DocumentChecklist() {
                 {item.isRightsDoc ? <select className="text-xs font-medium px-2 py-1 rounded-lg outline-none" style={{ border: "1px solid #ccc", background: "#fff" }} value={d.rightsType || "識別情報"} onChange={e => updDetail(item.id, "rightsType", e.target.value)}><option value="識別情報">登記識別情報通知</option><option value="権利証">登記済権利証</option></select>
                   : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
                 {item.isRightsDoc && en && <div className="mt-1">
-                  <div className="flex items-center gap-0.5 flex-wrap">
-                    <select className="text-[11px] px-1 py-0.5 rounded outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8", color: "#566275" }} value={d.receiptEra || "令和"} onChange={e => updDetail(item.id, "receiptEra", e.target.value)}>
-                      <option value="令和">令和</option><option value="平成">平成</option><option value="昭和">昭和</option>
-                    </select>
-                    <Combo value={d.receiptR || 0} options={ro} onChange={v => updDetail(item.id, "receiptR", v)} w={44} suffix="年" />
-                    <Combo value={d.receiptM || 0} options={mo} onChange={v => updDetail(item.id, "receiptM", v)} w={38} suffix="月" />
-                    <Combo value={d.receiptD || 0} options={dayo} onChange={v => updDetail(item.id, "receiptD", v)} w={38} suffix="日" />
-                  </div>
-                  <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={d.receiptNum || ""} onChange={e => updDetail(item.id, "receiptNum", e.target.value)} placeholder="例：第６９９７０号" />
+                  {(d.receipts || [{ era: d.receiptEra || "令和", r: d.receiptR || 0, m: d.receiptM || 0, d: d.receiptD || 0, num: d.receiptNum || "" }]).map((rc, ri) => (
+                    <div key={ri} className="mb-1.5" style={{ paddingLeft: ri > 0 ? 0 : 0, borderLeft: ri > 0 ? "2px solid #e5e9f0" : "none", marginLeft: ri > 0 ? 0 : 0 }}>
+                      {ri > 0 && <div className="border-t my-1" style={{ borderColor: "#e5e9f0" }} />}
+                      <div className="flex items-center gap-0.5 flex-wrap">
+                        <select className="text-[11px] px-1 py-0.5 rounded outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8", color: "#566275" }} value={rc.era || "令和"} onChange={e => updReceipt(item.id, ri, "era", e.target.value)}>
+                          <option value="令和">令和</option><option value="平成">平成</option><option value="昭和">昭和</option>
+                        </select>
+                        <Combo value={rc.r || 0} options={ro} onChange={v => updReceipt(item.id, ri, "r", v)} w={44} suffix="年" />
+                        <Combo value={rc.m || 0} options={mo} onChange={v => updReceipt(item.id, ri, "m", v)} w={38} suffix="月" />
+                        <Combo value={rc.d || 0} options={dayo} onChange={v => updReceipt(item.id, ri, "d", v)} w={38} suffix="日" />
+                        {(d.receipts || []).length > 1 && <button className="text-sm leading-none ml-1" style={{ color: "#ccc" }} onClick={() => removeReceipt(item.id, ri)}>×</button>}
+                      </div>
+                      <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={rc.num || ""} onChange={e => updReceipt(item.id, ri, "num", e.target.value)} placeholder="例：第６９９７０号" />
+                    </div>
+                  ))}
+                  <button className="text-[11px] font-medium mt-1 px-2 py-0.5 rounded" style={{ color: "#4338ca", background: "#eef2ff" }} onClick={() => addReceipt(item.id)}>＋ 追加</button>
                 </div>}
                 {item.isAddressChange && en && <div className="text-[10px] mt-1" style={{ color: "#8393a7" }}>※「登記住所」の内容が反映されます</div>}
                 {item.isInkan && <div className="text-[10px] mt-0.5 font-medium" style={{ color: "#4338ca" }}>→ {en ? (ce === "corporate" ? "会社実印" : "ご実印") : (ce === "corporate" ? "会社印（認印可）" : "個人印（認印可）")} が自動挿入</div>}
