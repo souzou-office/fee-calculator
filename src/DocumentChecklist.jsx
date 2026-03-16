@@ -37,18 +37,22 @@ async function extractPDFText(file) {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const tc = await page.getTextContent();
-    // グループ化: 同じY座標のテキストを1行にまとめる
-    const byY = {};
-    for (const item of tc.items) {
-      if (!item.str || !item.str.trim()) continue;
-      const y = Math.round(item.transform[5]);
-      if (!byY[y]) byY[y] = [];
-      byY[y].push({ x: item.transform[4], text: item.str });
+    // グループ化: 近接Y座標（閾値3pt以内）のテキストを1行にまとめる
+    const items = tc.items.filter(it => it.str && it.str.trim());
+    if (!items.length) continue;
+    items.sort((a, b) => b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4]);
+    const rows = [];
+    let curRow = [items[0]], curY = items[0].transform[5];
+    for (let j = 1; j < items.length; j++) {
+      const y = items[j].transform[5];
+      if (Math.abs(y - curY) <= 3) { curRow.push(items[j]); }
+      else { rows.push(curRow); curRow = [items[j]]; curY = y; }
     }
-    const sortedYs = Object.keys(byY).sort((a, b) => Number(b) - Number(a));
-    for (const y of sortedYs) {
-      const row = byY[y].sort((a, b) => a.x - b.x).map(i => i.text).join(" ").trim();
-      if (row) lines.push(row);
+    rows.push(curRow);
+    for (const row of rows) {
+      row.sort((a, b) => a.transform[4] - b.transform[4]);
+      const text = row.map(it => it.str).join("").trim();
+      if (text) lines.push(text);
     }
   }
   return lines;
@@ -56,59 +60,66 @@ async function extractPDFText(file) {
 
 // 全角数字→半角
 const z2h = s => s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
-// 全角カウント→そのまま保持
-const COUNT_RE = /[０-９]+通|１通|２通|３通|４通|５通/;
+// 全角カウント
+const COUNT_RE = /[０-９0-9]+\s*通/;
+// 番号付き項目: 全角・半角数字 ＋ ．or.
+const ITEM_RE = /^[０-９１２３４５６７８９0-9]+[．.]\s*(.+)$/;
 
 function parsePDFLines(lines) {
   const result = { date: {}, clientName: "", honorific: "様", propertyDescs: [], registryAddress: "", role: "seller", entity: "individual", isMail: false, items: [] };
+  // 全文（全角数字を半角に変換したバージョンも用意）
   const full = lines.join("\n");
+  const fullH = z2h(full);
 
-  // 日付: 令和○年○月○日
-  const dm = full.match(/令\s*和\s*(\d+)\s*年\s*(\d+)\s*月\s*(\d+)\s*日/);
+  // 日付: 令和○年○月○日（全角・半角両対応）
+  const dm = fullH.match(/令\s*和\s*(\d+)\s*年\s*(\d+)\s*月\s*(\d+)\s*日/);
   if (dm) result.date = { r: Number(dm[1]), m: Number(dm[2]), d: Number(dm[3]) };
 
   // 郵送判定
   if (full.includes("レターパック") || full.includes("郵送")) result.isMail = true;
 
-  // 宛名: タイトル行の前にある名前行（「様」「御中」で終わる）
+  // 宛名: 「様」「御中」で終わる行を探す
   for (const line of lines) {
-    const nm = line.match(/^(.+?)\s*(様|御中)\s*$/);
-    if (nm && !line.includes("必要") && !line.includes("書類") && nm[1].length < 30) {
+    const t = line.trim();
+    const nm = t.match(/^(.+?)\s*(様|御中)\s*$/);
+    if (nm && !t.includes("必要") && !t.includes("書類") && !t.includes("身分証") && !t.includes("印鑑") && nm[1].length < 30) {
       result.clientName = nm[1].trim();
       result.honorific = nm[2];
       break;
     }
   }
 
-  // 売主/買主判定: 住民票があれば買主寄り、識別情報/権利証があれば売主寄り
+  // 売主/買主判定
   const hasRights = full.includes("識別情報") || full.includes("権利証");
-  const hasJuminhyo = full.includes("住民票") && !full.includes("附票");
+  const hasJuminhyo = /住民票/.test(full) && !full.includes("附票");
   if (hasJuminhyo && !hasRights) result.role = "buyer";
   else result.role = "seller";
 
   // 法人判定
   if (full.includes("代表者") && (full.includes("登記事項証明書") || full.includes("履歴事項"))) result.entity = "corporate";
 
-  // 番号付き項目抽出: 全角数字＋．or. パターン
-  const itemRe = /^[１-９0-9１０]+[．.]\s*(.+)$/;
+  // 番号付き項目抽出
   for (const line of lines) {
-    const m = line.match(itemRe);
+    const m = line.trim().match(ITEM_RE);
     if (m) {
       let text = m[1].trim();
-      // 通数を抽出
       let count = "";
       const cm = text.match(COUNT_RE);
-      if (cm) { count = cm[0]; text = text.replace(COUNT_RE, "").trim(); }
-      // 受付情報を抽出
+      if (cm) { count = cm[0].replace(/\s/g, ""); text = text.replace(COUNT_RE, "").trim(); }
       let receiptInfo = "";
-      const rm = text.match(/（(.+?)）/);
-      // 権利証判定
+      const rm = text.match(/[（(]([^）)]*受付[^）)]*)[）)]/);
+      if (rm) receiptInfo = rm[1];
       let rightsType = "";
       if (text.includes("識別情報")) rightsType = "識別情報";
       else if (text.includes("権利証") || text.includes("登記済")) rightsType = "権利証";
-
       result.items.push({ text, count, receiptInfo, rightsType });
     }
+  }
+
+  // 登記簿上の住所
+  for (const line of lines) {
+    const am = line.match(/登記簿上の住所[「『]([^」』]+)[」』]/);
+    if (am) { result.registryAddress = am[1]; break; }
   }
 
   // 不動産の表示
@@ -117,7 +128,7 @@ function parsePDFLines(lines) {
     if (line.includes("不動産の表示")) { inProp = true; continue; }
     if (inProp) {
       const t = line.trim();
-      if (!t || t === "＿＿＿＿＿＿＿＿" || t.startsWith("TEL") || t.startsWith("FAX") || t.includes("司法書士")) break;
+      if (!t || /^[＿_]+$/.test(t) || t.startsWith("TEL") || t.startsWith("FAX") || t.includes("司法書士") || t.includes("〒")) break;
       result.propertyDescs.push(t);
     }
   }
@@ -329,7 +340,7 @@ export default function DocumentChecklist() {
       const lines = await extractPDFText(file);
       const p = parsePDFLines(lines); if (!p) { setPdfLoading(false); return; }
       if (p.date) setDp({ r: p.date.r || 0, m: p.date.m || 0, d: p.date.d || 0 });
-      const pDescs = p.propertyDesc ? (Array.isArray(p.propertyDesc) ? p.propertyDesc : [p.propertyDesc]) : [""];
+      const pDescs = p.propertyDescs && p.propertyDescs.length ? p.propertyDescs : [""];
       setMeta(m => ({ ...m, clientName: p.clientName || "", honorific: p.honorific || "様", propertyDescs: pDescs.length ? pDescs : [""], registryAddress: p.registryAddress || "" }));
       const role = p.role || "seller", ent = p.entity || "individual", mail = !!p.isMail;
       setTab(role); setEntity(e => ({ ...e, [role]: ent })); setIsMail(m => ({ ...m, [role]: mail }));
@@ -430,10 +441,18 @@ export default function DocumentChecklist() {
   const printPDF = () => {
     const el = document.getElementById("doc-checklist-preview");
     if (!el) return;
-    const w = window.open("", "_blank");
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${pdfFileName}</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 15mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px 36px;color:#222;font-size:15px;line-height:1.8}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
-    w.document.close();
-    setTimeout(() => w.print(), 500);
+    // 既存のiframeがあれば削除
+    let iframe = document.getElementById("print-iframe");
+    if (iframe) iframe.remove();
+    iframe = document.createElement("iframe");
+    iframe.id = "print-iframe";
+    iframe.style.cssText = "position:fixed;width:0;height:0;border:none;left:-9999px;top:-9999px;";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${pdfFileName}</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 15mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px 36px;color:#222;font-size:15px;line-height:1.8}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
+    doc.close();
+    setTimeout(() => { iframe.contentWindow.print(); }, 600);
   };
 
   const previewPanel = (
