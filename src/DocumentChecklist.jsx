@@ -133,7 +133,7 @@ export default function DocumentChecklist() {
     if (configStates[ck]) return configStates[ck];
     const items = filterItems(getBase(tab, ce), cm, mailItems).map(it => ({ ...it }));
     const enabled = {}, details = {};
-    items.forEach(it => { enabled[it.id] = true; details[it.id] = { count: it.defaultCount || "", receiptInfo: "", rightsType: "識別情報", receipts: it.isRightsDoc ? [{ era: "令和", r: 0, m: 0, d: 0, num: "" }] : undefined }; });
+    items.forEach(it => { enabled[it.id] = true; details[it.id] = { count: it.defaultCount || "", receiptInfo: "", rightsType: "識別情報", receipts: it.isRightsDoc ? [{ type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "" }] : undefined }; });
     const nts = getNotes(tab, ce, cm), ne = {}; nts.forEach((_, i) => { ne[i] = true; });
     const st = { items, enabled, details, noteEnabled: ne, customItems: [], customNotes: [] };
     setConfigStates(p => ({ ...p, [ck]: st })); return st;
@@ -151,13 +151,13 @@ export default function DocumentChecklist() {
   });
   const addReceipt = (id) => upd(s => {
     const d = { ...(s.details[id] || {}) };
-    d.receipts = [...(d.receipts || []), { era: "令和", r: 0, m: 0, d: 0, num: "" }];
+    d.receipts = [...(d.receipts || []), { type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "" }];
     return { ...s, details: { ...s.details, [id]: d } };
   });
   const removeReceipt = (id, idx) => upd(s => {
     const d = { ...(s.details[id] || {}) };
     d.receipts = (d.receipts || []).filter((_, i) => i !== idx);
-    if (d.receipts.length === 0) d.receipts = [{ era: "令和", r: 0, m: 0, d: 0, num: "" }];
+    if (d.receipts.length === 0) d.receipts = [{ type: "識別情報", era: "令和", r: 0, m: 0, d: 0, num: "" }];
     return { ...s, details: { ...s.details, [id]: d } };
   });
   const toggleNote = i => upd(s => ({ ...s, noteEnabled: { ...s.noteEnabled, [i]: !s.noteEnabled[i] } }));
@@ -181,7 +181,7 @@ export default function DocumentChecklist() {
   const customNotes = state.customNotes || [];
   const introText = cm ? INTRO.mail : INTRO.default;
   const preNote = cm ? "書類への押印は１通につき２ヶ所（ご実印にて鮮明にお願いします。）" : null;
-  const buildOneReceipt = (rc) => {
+  const buildOneReceiptDate = (rc) => {
     if (!rc) return "";
     const { era, r, m, d: dd, num } = rc;
     if (!era && !r && !m && !dd && !num) return "";
@@ -190,16 +190,27 @@ export default function DocumentChecklist() {
     if (num) s += num.endsWith("号") ? num : num + "号";
     return s;
   };
-  const buildReceiptInfo = (d) => {
+  const rightsTypeName = (type) => type === "権利証" ? "登記済権利証" : "登記識別情報通知";
+  const buildRightsDisplay = (d) => {
     const receipts = d?.receipts;
-    if (receipts && receipts.length > 0) return receipts.map(buildOneReceipt).filter(Boolean).join("、");
-    // legacy single-entry fallback
-    const era = d?.receiptEra, r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
-    if (!era && !r && !m && !dd && !num) return d?.receiptInfo || "";
-    return buildOneReceipt({ era, r, m, d: dd, num });
+    if (!receipts || receipts.length === 0) {
+      // legacy fallback
+      const name = rightsTypeName(d?.rightsType);
+      const era = d?.receiptEra, r = d?.receiptR, m = d?.receiptM, dd = d?.receiptD, num = d?.receiptNum;
+      const ri = buildOneReceiptDate({ era, r, m, d: dd, num }) || d?.receiptInfo || "";
+      return [{ name, info: ri }];
+    }
+    // group by type
+    const groups = {};
+    for (const rc of receipts) {
+      const t = rc.type || "識別情報", name = rightsTypeName(t);
+      if (!groups[name]) groups[name] = [];
+      const info = buildOneReceiptDate(rc);
+      if (info) groups[name].push(info);
+    }
+    return Object.entries(groups).map(([name, infos]) => ({ name, info: infos.join("、") }));
   };
   const itemDisplayText = (it, d) => {
-    if (it.isRightsDoc) return (d?.rightsType || "識別情報") === "権利証" ? "登記済権利証" : "登記識別情報通知";
     if (it.isCorpDoc) return `${corpSealPrefix}「${it.text}」`;
     return it.text;
   };
@@ -350,8 +361,11 @@ export default function DocumentChecklist() {
               const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
               if (item.isAddressChange) return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><div style={{ flex: 1 }}><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 11, color: "#555", marginTop: 1, lineHeight: 1.5 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 11, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
               if (item.isSeal) return <div key="_seal" style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span>{item.text}</span></div>;
-              const ri = buildReceiptInfo(d);
-              return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 11, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 12, color: "#555", marginLeft: 6 }}>{d.count}</span>}</div>;
+              if (item.isRightsDoc) {
+                const groups = buildRightsDisplay(d);
+                return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span style={{ flex: 1 }}>{groups.map((g, gi) => <span key={gi}>{gi > 0 && "／"}{g.name}{g.info && <span style={{ fontSize: 11, color: "#666" }}>（{g.info}）</span>}</span>)}</span>{d.count && <span style={{ fontSize: 12, color: "#555", marginLeft: 6 }}>{d.count}</span>}</div>;
+              }
+              return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 13 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 26 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}</span>{d.count && <span style={{ fontSize: 12, color: "#555", marginLeft: 6 }}>{d.count}</span>}</div>;
             })}
           </div>
           {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 14, paddingTop: 8, borderTop: "1px dashed #ddd" }}>
@@ -437,13 +451,15 @@ export default function DocumentChecklist() {
               {fx ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "#e5e9f0", color: "#8393a7" }}>固定</span>
                 : <div onClick={() => toggleItem(item.id)} className="w-5 h-5 rounded flex items-center justify-center cursor-pointer shrink-0 text-[11px] font-bold" style={{ background: en ? "#4338ca" : "#fff", border: `2px solid ${en ? "#4338ca" : "#ccc"}`, color: "#fff" }}>{en && "✓"}</div>}
               <div className="flex-1" style={{ opacity: en ? 1 : 0.4 }}>
-                {item.isRightsDoc ? <select className="text-xs font-medium px-2 py-1 rounded-lg outline-none" style={{ border: "1px solid #ccc", background: "#fff" }} value={d.rightsType || "識別情報"} onChange={e => updDetail(item.id, "rightsType", e.target.value)}><option value="識別情報">登記識別情報通知</option><option value="権利証">登記済権利証</option></select>
+                {item.isRightsDoc ? <span className="text-xs font-medium">{item.text}</span>
                   : <span className="text-xs font-medium">{item.text}{item.isMailItem && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ color: "#4338ca", background: "#eef2ff" }}>郵送</span>}</span>}
                 {item.isRightsDoc && en && <div className="mt-1">
-                  {(d.receipts || [{ era: d.receiptEra || "令和", r: d.receiptR || 0, m: d.receiptM || 0, d: d.receiptD || 0, num: d.receiptNum || "" }]).map((rc, ri) => (
-                    <div key={ri} className="mb-1.5" style={{ paddingLeft: ri > 0 ? 0 : 0, borderLeft: ri > 0 ? "2px solid #e5e9f0" : "none", marginLeft: ri > 0 ? 0 : 0 }}>
-                      {ri > 0 && <div className="border-t my-1" style={{ borderColor: "#e5e9f0" }} />}
-                      <div className="flex items-center gap-0.5 flex-wrap">
+                  {(d.receipts || [{ type: d.rightsType || "識別情報", era: d.receiptEra || "令和", r: d.receiptR || 0, m: d.receiptM || 0, d: d.receiptD || 0, num: d.receiptNum || "" }]).map((rc, ri) => (
+                    <div key={ri} className="mb-1.5 rounded-lg px-2 py-1.5" style={{ background: "#fff", border: "1px solid #e5e9f0" }}>
+                      <div className="flex items-center gap-1 mb-1 flex-wrap">
+                        <select className="text-[11px] px-1 py-0.5 rounded outline-none font-medium" style={{ border: "1px solid #c7d2fe", background: "#eef2ff", color: "#4338ca" }} value={rc.type || "識別情報"} onChange={e => updReceipt(item.id, ri, "type", e.target.value)}>
+                          <option value="識別情報">識別情報</option><option value="権利証">登記済証</option>
+                        </select>
                         <select className="text-[11px] px-1 py-0.5 rounded outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8", color: "#566275" }} value={rc.era || "令和"} onChange={e => updReceipt(item.id, ri, "era", e.target.value)}>
                           <option value="令和">令和</option><option value="平成">平成</option><option value="昭和">昭和</option>
                         </select>
@@ -452,7 +468,7 @@ export default function DocumentChecklist() {
                         <Combo value={rc.d || 0} options={dayo} onChange={v => updReceipt(item.id, ri, "d", v)} w={38} suffix="日" />
                         {(d.receipts || []).length > 1 && <button className="text-sm leading-none ml-1" style={{ color: "#ccc" }} onClick={() => removeReceipt(item.id, ri)}>×</button>}
                       </div>
-                      <input className="w-full mt-1 px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={rc.num || ""} onChange={e => updReceipt(item.id, ri, "num", e.target.value)} placeholder="例：第６９９７０号" />
+                      <input className="w-full px-2 py-1 rounded text-xs outline-none" style={{ border: "1px solid #dce1ea", background: "#f0f3f8" }} value={rc.num || ""} onChange={e => updReceipt(item.id, ri, "num", e.target.value)} placeholder="例：第６９９７０" />
                     </div>
                   ))}
                   <button className="text-[11px] font-medium mt-1 px-2 py-0.5 rounded" style={{ color: "#4338ca", background: "#eef2ff" }} onClick={() => addReceipt(item.id)}>＋ 追加</button>
