@@ -306,35 +306,37 @@ export default function DocumentChecklist() {
 
   const previewPanel = (
     <div>
-      <div id="doc-checklist-preview" className="rounded-sm p-6 mb-3" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", border: "1px solid #e8e8e8", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 13, lineHeight: 1.8, color: "#222" }}>
-        <div style={{ textAlign: "right", marginBottom: 14 }}>{dw}</div>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
-        <div style={{ textAlign: "right", marginBottom: 18, fontSize: 11, lineHeight: 1.7, color: "#444" }}>
-          <div>{office.zip} {office.address}</div>
-          <div style={{ fontWeight: 600, fontSize: 13, color: "#222" }}>{office.name}</div>
-          <div>{office.rep}</div>
-          <div style={{ fontSize: 10 }}>TEL : {office.tel} / FAX : {office.fax}</div>
-          <div style={{ fontSize: 10 }}>{office.email}</div>
+      <div style={{ width: "100%", aspectRatio: "210 / 297", position: "relative", background: "#e8ecf4", borderRadius: 4, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.10)" }}>
+        <div id="doc-checklist-preview" style={{ position: "absolute", inset: 0, overflow: "auto", padding: "32px 28px", background: "#fff", fontFamily: "'Noto Serif JP','Yu Mincho',serif", fontSize: 12, lineHeight: 1.8, color: "#222" }}>
+          <div style={{ textAlign: "right", marginBottom: 12 }}>{dw}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>{meta.clientName || "＿＿＿＿"} {meta.honorific}</div>
+          <div style={{ textAlign: "right", marginBottom: 16, fontSize: 10, lineHeight: 1.7, color: "#444" }}>
+            <div>{office.zip} {office.address}</div>
+            <div style={{ fontWeight: 600, fontSize: 12, color: "#222" }}>{office.name}</div>
+            <div>{office.rep}</div>
+            <div style={{ fontSize: 9 }}>TEL : {office.tel} / FAX : {office.fax}</div>
+            <div style={{ fontSize: 9 }}>{office.email}</div>
+          </div>
+          <div style={{ textAlign: "center", fontSize: 15, fontWeight: 700, letterSpacing: "0.3em", margin: "10px 0 14px" }}>必 要 書 類 等 一 覧</div>
+          <div style={{ marginBottom: 12, textIndent: "1em", fontSize: 11 }}>{introText}</div>
+          {preNote && <div style={{ marginBottom: 8, fontSize: 9, color: "#666" }}>＊ {preNote}</div>}
+          <div style={{ marginBottom: 12 }}>
+            {activeItems.map((item, idx) => {
+              const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
+              if (item.isAddressChange) return <div key={item.id} style={{ display: "flex", marginBottom: 3, fontSize: 11 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 22 }}>{num}．</span><div style={{ flex: 1 }}><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 9, color: "#555", marginTop: 1, lineHeight: 1.5 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 9, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
+              if (item.isSeal) return <div key="_seal" style={{ display: "flex", marginBottom: 3, fontSize: 11 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 22 }}>{num}．</span><span>{item.text}</span></div>;
+              const ri = buildReceiptInfo(d);
+              return <div key={item.id} style={{ display: "flex", marginBottom: 3, fontSize: 11 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 22 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 9, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 10, color: "#555", marginLeft: 4 }}>{d.count}</span>}</div>;
+            })}
+          </div>
+          {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 12, paddingTop: 6, borderTop: "1px dashed #ddd" }}>
+            {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 10, color: "#555", marginBottom: 3, lineHeight: 1.5 }}>＊ {buildNote(n)}</div>)}
+            {customNotes.map((n) => <div key={n.id} style={{ fontSize: 10, color: "#555", marginBottom: 3, lineHeight: 1.5 }}>＊ {n.text}</div>)}
+          </div>}
+          <div style={{ marginTop: 16, paddingTop: 8, textAlign: "center" }}><div style={{ fontSize: 12, fontWeight: 600, marginBottom: 3 }}>不動産の表示</div>{meta.propertyDescs.filter(s => s).length > 0 ? meta.propertyDescs.filter(s => s).map((pd, i) => <div key={i} style={{ fontSize: 12 }}>{pd}</div>) : <div style={{ fontSize: 12 }}>＿＿＿＿＿＿＿＿</div>}</div>
         </div>
-        <div style={{ textAlign: "center", fontSize: 16, fontWeight: 700, letterSpacing: "0.3em", margin: "12px 0 16px" }}>必 要 書 類 等 一 覧</div>
-        <div style={{ marginBottom: 14, textIndent: "1em", fontSize: 12 }}>{introText}</div>
-        {preNote && <div style={{ marginBottom: 10, fontSize: 10, color: "#666" }}>＊ {preNote}</div>}
-        <div style={{ marginBottom: 14 }}>
-          {activeItems.map((item, idx) => {
-            const num = FW[idx] || String(idx + 1), d = state.details[item.id] || {};
-            if (item.isAddressChange) return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 12 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 24 }}>{num}．</span><div style={{ flex: 1 }}><div>住民票 または 戸籍の附票</div><div style={{ fontSize: 10, color: "#555", marginTop: 2, lineHeight: 1.6 }}>{meta.registryAddress ? `登記簿上の住所「${meta.registryAddress}」から現住所まで移転の経緯全てが記載されているもの` : "現住所が登記簿上の住所と異なる場合のみ、登記簿上の住所から現住所まで移転の経緯全てが記載されているもの"}</div><div style={{ fontSize: 10, color: "#555" }}>（別途、住所変更登記の費用が発生いたします。）</div></div></div>;
-            if (item.isSeal) return <div key="_seal" style={{ display: "flex", marginBottom: 4, fontSize: 12 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 24 }}>{num}．</span><span>{item.text}</span></div>;
-            const ri = buildReceiptInfo(d);
-            return <div key={item.id} style={{ display: "flex", marginBottom: 4, fontSize: 12 }}><span style={{ fontWeight: 500, flexShrink: 0, minWidth: 24 }}>{num}．</span><span style={{ flex: 1 }}>{itemDisplayText(item, d)}{ri && <span style={{ fontSize: 10, color: "#666" }}>（{ri}）</span>}</span>{d.count && <span style={{ fontSize: 11, color: "#555", marginLeft: 6 }}>{d.count}</span>}</div>;
-          })}
-        </div>
-        {(activeNotes.length > 0 || customNotes.length > 0) && <div style={{ marginTop: 14, paddingTop: 8, borderTop: "1px dashed #ddd" }}>
-          {activeNotes.map((n, i) => <div key={i} style={{ fontSize: 11, color: "#555", marginBottom: 4, lineHeight: 1.6 }}>＊ {buildNote(n)}</div>)}
-          {customNotes.map((n) => <div key={n.id} style={{ fontSize: 11, color: "#555", marginBottom: 4, lineHeight: 1.6 }}>＊ {n.text}</div>)}
-        </div>}
-        <div style={{ marginTop: 18, paddingTop: 10, textAlign: "center" }}><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div>{meta.propertyDescs.filter(s => s).length > 0 ? meta.propertyDescs.filter(s => s).map((pd, i) => <div key={i} style={{ fontSize: 13 }}>{pd}</div>) : <div style={{ fontSize: 13 }}>＿＿＿＿＿＿＿＿</div>}</div>
       </div>
-      <button onClick={printPDF} className="w-full py-2.5 rounded-xl text-sm font-bold transition-all" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
+      <button onClick={printPDF} className="w-full py-2.5 rounded-xl text-sm font-bold transition-all mt-3" style={{ background: "#1e3a5f", color: "#fff" }}>PDF出力</button>
     </div>
   );
 
@@ -466,7 +468,7 @@ export default function DocumentChecklist() {
       </div>
 
       {/* Right: Preview panel (sticky on desktop, flows below on mobile) */}
-      <div className="w-full lg:w-[420px] lg:shrink-0">
+      <div className="w-full lg:w-[380px] lg:shrink-0">
         <div className="lg:sticky lg:top-4">
           <h2 className="text-xs font-bold mb-2" style={{ color: "#8393a7" }}>プレビュー</h2>
           {previewPanel}
