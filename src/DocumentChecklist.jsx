@@ -287,7 +287,6 @@ export default function DocumentChecklist() {
   const printPDF = () => {
     const el = document.getElementById("doc-checklist-preview");
     if (!el) return;
-    // 既存のiframeがあれば削除
     let iframe = document.getElementById("print-iframe");
     if (iframe) iframe.remove();
     iframe = document.createElement("iframe");
@@ -299,6 +298,21 @@ export default function DocumentChecklist() {
     doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${pdfFileName}</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP&display=swap');@page{margin:15mm 15mm;size:A4}body{font-family:'Noto Serif JP','Yu Mincho',serif;padding:40px 36px;color:#222;font-size:15px;line-height:1.8}@media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
     doc.close();
     setTimeout(() => { iframe.contentWindow.print(); }, 600);
+  };
+
+  const exportWord = () => {
+    const el = document.getElementById("doc-checklist-preview");
+    if (!el) return;
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>@page{size:A4;margin:15mm 15mm}body{font-family:'Yu Mincho','ＭＳ 明朝',serif;font-size:12pt;line-height:1.8;color:#222}</style></head><body>${el.innerHTML}</body></html>`;
+    const blob = new Blob(["\ufeff" + html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${pdfFileName}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const previewPanel = (
@@ -335,7 +349,10 @@ export default function DocumentChecklist() {
           <div style={{ marginTop: 20, paddingTop: 10, textAlign: "center" }}><div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>不動産の表示</div>{meta.propertyDescs.filter(s => s).length > 0 ? meta.propertyDescs.filter(s => s).map((pd, i) => <div key={i} style={{ fontSize: 14 }}>{pd}</div>) : <div style={{ fontSize: 14 }}>＿＿＿＿＿＿＿＿</div>}</div>
         </div>
       </div>
-      <button onClick={printPDF} className="w-full py-2.5 rounded-xl text-sm font-bold transition-all mt-3" style={{ background: "#4338ca", color: "#fff" }}>PDF出力</button>
+      <div className="flex gap-2 mt-3">
+        <button onClick={printPDF} className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all" style={{ background: "#4338ca", color: "#fff" }}>PDF出力</button>
+        <button onClick={exportWord} className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all" style={{ background: "#2563eb", color: "#fff" }}>Word出力</button>
+      </div>
     </div>
   );
 
