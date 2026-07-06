@@ -58,7 +58,7 @@ const IX={MX:0,IS:1,IN:2,HZ:3,TS:4,TO:5,NS:6,NO:7};
 function lk(ft,m,c){if(m<=0)return 0;const r=ft.find(r=>m<=r[IX.MX]);return r?r[c]:ft[ft.length-1][c];}
 const LB={transfer:"所有権移転",preservation:"所有権保存",mortgage:"抵当権設定",rootMortgage:"根抵当権設定",deletion:"（根）抵当権抹消",addressChange:"所有権登記名義人住所変更"};
 function itemLabel(it){const b=LB[it.type]||it.type;if(it.type==="mortgage"){const m=Math.ceil((it.debtAmount||0)/10000);return m>0?`抵当権設定（債権額${fmtM(m)}）`:b;}if(it.type==="rootMortgage"){const m=Math.ceil((it.debtAmount||0)/10000);return m>0?`根抵当権設定（極度額${fmtM(m)}）`:b;}return b;}
-const f1=v=>Math.max(1000,Math.floor(v/1000)*1000);
+const f1=v=>v<=0?0:Math.max(1000,Math.floor(v/1000)*1000);
 const f2=v=>v<=0?0:Math.max(1000,Math.floor(v/100)*100);
 
 function calcTaxDetail(type,it,hc){
